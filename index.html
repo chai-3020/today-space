@@ -1069,21 +1069,44 @@
         renderTodos();
       });
 
-      // Focus log
-      function seedFocusLog() {
+      // Focus log — 只记录真实完成的番茄钟,不再预填任何演示数据。
+      // 历史版本曾用硬编码数值(38/52/25/64/45/30 等)填充过去 7 天。
+      // 真实番茄钟每次固定 +25 分钟,因此一旦检测到非 25 的倍数,即为旧版
+      // seed 污染:过去日期不可信,只保留今天的真实积累(seed 中今天恒为 0,
+      // 非零必来自真实番茄钟)。
+      function sanitizeFocusLog(log) {
         const out = { byDay: {}, sessions: {} };
-        const values = [38, 52, 25, 64, 45, 30, 0];
-        for (let i = 6; i >= 0; i--) {
-          const d = today();
-          d.setDate(d.getDate() - i);
-          const k = dateKey(d);
-          out.byDay[k] = values[6 - i];
-          out.sessions[k] = Math.round(values[6 - i] / 25);
+        if (!log || typeof log !== 'object' || !log.byDay) return out;
+        const keys = Object.keys(log.byDay);
+        const contaminated = keys.some((k) => {
+          const v = Number(log.byDay[k]) || 0;
+          return v > 0 && v % 25 !== 0;
+        });
+        if (contaminated) {
+          const t = todayKey();
+          const v = Number(log.byDay[t]) || 0;
+          if (v > 0) {
+            out.byDay[t] = v;
+            const s = Number((log.sessions || {})[t]) || 0;
+            if (s > 0) out.sessions[t] = s;
+          }
+          return out;
+        }
+        for (const k of keys) {
+          const v = Number(log.byDay[k]) || 0;
+          if (v === 0) continue;
+          if (v % 25 !== 0) continue; // 防御:非 25 倍数不可能来自真实番茄钟
+          out.byDay[k] = v;
+          const s = Number((log.sessions || {})[k]) || 0;
+          if (s > 0) out.sessions[k] = s;
         }
         return out;
       }
-      let focusLog = store.get('space-focus', seedFocusLog());
-
+      let focusLog = sanitizeFocusLog(store.get('space-focus', null));
+      if (!Object.keys(focusLog.byDay).length && !Object.keys(focusLog.sessions).length) {
+        focusLog = { byDay: {}, sessions: {} };
+      }
+      store.set('space-focus', focusLog); // 立即落盘清洗结果,避免假数据残留
       function updateFocusUi() {
         const min = focusLog.byDay[todayKey()] || 0;
         const sessions = focusLog.sessions[todayKey()] || 0;
