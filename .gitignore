@@ -1,0 +1,14 @@
+# wrangler 本地状态
+.wrangler/
+node_modules/
+
+# 本地服务器/日志
+server.log
+server-error.log
+tunnel.log
+tunnel-error.log
+*.log
+
+# 临时文件
+_*
+!README.md

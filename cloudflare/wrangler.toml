@@ -1,0 +1,15 @@
+name = "today-space"
+main = "src/worker.js"
+compatibility_date = "2025-09-01"
+compatibility_flags = ["nodejs_compat"]
+
+# 前端静态资源
+[assets]
+directory = "./public"
+binding = "ASSETS"
+
+# D1 数据库
+[[d1_databases]]
+binding = "DB"
+database_name = "today-space-db"
+database_id = "a181feaa-daf6-43ae-bc88-7a587ad2f371"
