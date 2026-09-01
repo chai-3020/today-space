@@ -13,7 +13,7 @@ App({
       return;
     }
     wx.cloud.init({
-      env: 'CHANGE_ME_CLOUD_ENV', // 云开发环境 ID(部署时替换)
+      env: 'cloud1-d9gqbbkdz44c81883', // 云开发环境 ID(部署时替换)
       traceUser: true
     });
     this.login();

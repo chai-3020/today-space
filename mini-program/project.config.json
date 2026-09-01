@@ -1,7 +1,7 @@
 {
   "description": "今日空间小程序",
   "projectname": "today-space-mini",
-  "appid": "CHANGE_ME_APPID",
+  "appid": "wxb57a95d55bde4d5b",
   "compileType": "miniprogram",
   "libVersion": "3.0.0",
   "setting": {
@@ -9,9 +9,32 @@
     "enhance": true,
     "minified": true,
     "urlCheck": true,
-    "coverView": true
+    "coverView": true,
+    "postcss": false,
+    "compileWorklet": false,
+    "uglifyFileName": false,
+    "uploadWithSourceMap": true,
+    "packNpmManually": false,
+    "packNpmRelationList": [],
+    "minifyWXSS": true,
+    "minifyWXML": true,
+    "localPlugins": false,
+    "disableUseStrict": false,
+    "useCompilerPlugins": false,
+    "condition": false,
+    "babelSetting": {
+      "ignore": [],
+      "disablePlugins": [],
+      "outputPath": ""
+    }
   },
   "cloudfunctionRoot": "cloudfunctions/",
   "miniprogramRoot": "./",
-  "condition": {}
+  "condition": {},
+  "simulatorPluginLibVersion": {},
+  "packOptions": {
+    "ignore": [],
+    "include": []
+  },
+  "editorSetting": {}
 }

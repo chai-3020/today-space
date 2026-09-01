@@ -54,7 +54,7 @@ Page({
   async loadTodos() {
     try {
       const db = wx.cloud.database();
-      const res = await db.collection('todos').orderBy('createdAt', 'desc').get();
+      const res = await db.collection('todos').orderBy('createdAt', 'desc').limit(100).get();
       const todos = res.data;
       this.setData({ todos, todoCount: todos.length });
       this.applyFilter();
@@ -145,7 +145,7 @@ Page({
   async loadFocus() {
     try {
       const db = wx.cloud.database();
-      const res = await db.collection('focus_log').get();
+      const res = await db.collection('focus_log').limit(1000).get();
       const byDay = {};
       const sessions = {};
       for (const r of res.data) {

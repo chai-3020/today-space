@@ -42,7 +42,7 @@ Page({
   async loadToday() {
     try {
       const db = wx.cloud.database();
-      const res = await db.collection('focus_log').get();
+      const res = await db.collection('focus_log').limit(1000).get();
       const today = util.todayKey();
       let minutes = 0, sessions = 0;
       for (const r of res.data) {

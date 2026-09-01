@@ -9,10 +9,12 @@ Page({
 
   onShow() { this.loadAndDraw(); },
 
+  onReady() { this.drawCanvas(this.data.days || []); },
+
   async loadAndDraw() {
     try {
       const db = wx.cloud.database();
-      const res = await db.collection('focus_log').get();
+      const res = await db.collection('focus_log').limit(1000).get();
       const byDay = {};
       for (const r of res.data) {
         byDay[r.day] = (byDay[r.day] || 0) + r.minutes;
