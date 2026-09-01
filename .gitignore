@@ -12,3 +12,4 @@ tunnel-error.log
 # 临时文件
 _*
 !README.md
+sync.log
