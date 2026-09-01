@@ -1,0 +1,13 @@
+<!-- 便签 -->
+<view class="page">
+  <view class="panel notes">
+    <view class="panel-head">
+      <text class="panel-title">便签</text>
+      <text class="notes-status">{{status}}</text>
+    </view>
+    <textarea class="notes-area" placeholder="随手记点什么..." maxlength="20000" value="{{content}}" bindinput="onInput" bindblur="onSave" auto-height></textarea>
+    <view class="notes-foot">
+      <text class="notes-count">{{count}} 字</text>
+    </view>
+  </view>
+</view>

@@ -1,0 +1,27 @@
+<!-- 专注统计 -->
+<view class="page">
+  <view class="panel">
+    <view class="panel-head">
+      <text class="panel-title">本周专注</text>
+      <text class="panel-meta">近 7 天</text>
+    </view>
+    <canvas type="2d" id="weekly-chart" class="chart"></canvas>
+    <view class="chart-legend">
+      <text>近 7 天合计</text>
+      <text class="weekly-total">{{totalMinutes}} 分钟</text>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="panel-head">
+      <text class="panel-title">最近 7 天明细</text>
+    </view>
+    <view class="day-row" wx:for="{{days}}" wx:key="label">
+      <text class="day-label">{{item.label}}</text>
+      <view class="day-bar-track">
+        <view class="day-bar" style="width: {{item.pct}}%;"></view>
+      </view>
+      <text class="day-value">{{item.value}}</text>
+    </view>
+  </view>
+</view>

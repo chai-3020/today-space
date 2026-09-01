@@ -1,0 +1,25 @@
+<!-- 番茄钟 -->
+<view class="page">
+  <view class="panel pomo">
+    <view class="mode-row">
+      <text class="mode-item {{mode==='focus'?'active':''}}" data-mode="focus" bindtap="onMode">专注 25</text>
+      <text class="mode-item {{mode==='short'?'active':''}}" data-mode="short" bindtap="onMode">短休 5</text>
+      <text class="mode-item {{mode==='long'?'active':''}}" data-mode="long" bindtap="onMode">长休 15</text>
+    </view>
+
+    <view class="ring-wrap">
+      <view class="ring" style="background: conic-gradient({{ringColor}} {{ringPct}}%, #e8edf0 0%);">
+        <view class="ring-inner">
+          <text class="timer">{{timer}}</text>
+          <text class="timer-note">{{note}}</text>
+        </view>
+      </view>
+    </view>
+
+    <view class="pomo-actions">
+      <button class="start-btn {{running?'running':''}}" bindtap="onToggle">{{running?'暂停':'开始'}}</button>
+      <button class="reset-btn" bindtap="onReset">重置</button>
+    </view>
+    <view class="pomo-sessions">今日完成 {{todaySessions}} 个番茄 · 专注 {{todayMinutes}} 分钟</view>
+  </view>
+</view>

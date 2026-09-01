@@ -1,0 +1,52 @@
+<!-- 首页:概览 + 待办 -->
+<view class="page">
+  <!-- 概览卡片 -->
+  <view class="panel overview">
+    <view class="overview-head">
+      <text class="greeting">{{greeting}}，{{nickname}}</text>
+      <text class="clock">{{clock}}</text>
+    </view>
+    <view class="date-line">{{dateLine}}</view>
+    <view class="stat-row">
+      <view class="stat">
+        <text class="stat-num">{{statDone}}</text>
+        <text class="stat-label">已完成事项</text>
+      </view>
+      <view class="stat">
+        <text class="stat-num">{{statFocus}}</text>
+        <text class="stat-label">今日专注分钟</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 待办 -->
+  <view class="panel todo">
+    <view class="panel-head">
+      <text class="panel-title">待办清单</text>
+      <text class="panel-meta">{{doneCount}} / {{todoCount}}</text>
+    </view>
+    <view class="todo-form">
+      <input class="todo-input" placeholder="添加一件要做的事" confirm-type="done" bindconfirm="onAddTodo" value="{{todoInput}}" bindinput="onTodoInput" maxlength="80" />
+      <button class="add-btn" bindtap="onAddTodo">＋</button>
+    </view>
+    <view class="filter-row">
+      <view class="seg">
+        <text class="seg-item {{filter==='all'?'active':''}}" data-filter="all" bindtap="onFilter">全部</text>
+        <text class="seg-item {{filter==='active'?'active':''}}" data-filter="active" bindtap="onFilter">进行中</text>
+        <text class="seg-item {{filter==='done'?'active':''}}" data-filter="done" bindtap="onFilter">已完成</text>
+      </view>
+    </view>
+    <view wx:if="{{visibleTodos.length===0}}" class="empty-hint">{{emptyText}}</view>
+    <view wx:else>
+      <view class="todo-item {{item.done?'done':''}}" wx:for="{{visibleTodos}}" wx:key="_id">
+        <text class="todo-check {{item.done?'checked':''}}" data-id="{{item._id}}" bindtap="onToggleTodo">{{item.done?'✓':''}}</text>
+        <text class="todo-text">{{item.text}}</text>
+        <text class="todo-del" data-id="{{item._id}}" bindtap="onDeleteTodo">✕</text>
+      </view>
+    </view>
+    <view class="todo-foot">
+      <text class="todo-foot-count">已完成 {{doneCount}} / {{todoCount}}</text>
+      <text class="clear-btn" bindtap="onClearDone">清除已完成</text>
+    </view>
+  </view>
+</view>

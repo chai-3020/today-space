@@ -1,0 +1,11 @@
+.page { padding-bottom: 40rpx; }
+.panel-head { display: flex; justify-content: space-between; align-items: center; }
+.panel-meta { font-size: 24rpx; color: #5c6b74; }
+.chart { width: 100%; height: 300rpx; margin: 16rpx 0; }
+.chart-legend { display: flex; justify-content: space-between; font-size: 26rpx; color: #5c6b74; }
+.weekly-total { font-weight: 700; color: #0d9f6d; font-size: 30rpx; }
+.day-row { display: flex; align-items: center; gap: 16rpx; padding: 12rpx 0; }
+.day-label { width: 90rpx; font-size: 26rpx; color: #5c6b74; }
+.day-bar-track { flex: 1; background: #eef1f3; border-radius: 8rpx; height: 24rpx; overflow: hidden; }
+.day-bar { height: 100%; background: #0d9f6d; border-radius: 8rpx; min-width: 4rpx; }
+.day-value { width: 90rpx; text-align: right; font-size: 26rpx; color: #1c242a; }

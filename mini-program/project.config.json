@@ -1,0 +1,17 @@
+{
+  "description": "今日空间小程序",
+  "projectname": "today-space-mini",
+  "appid": "CHANGE_ME_APPID",
+  "compileType": "miniprogram",
+  "libVersion": "3.0.0",
+  "setting": {
+    "es6": true,
+    "enhance": true,
+    "minified": true,
+    "urlCheck": true,
+    "coverView": true
+  },
+  "cloudfunctionRoot": "cloudfunctions/",
+  "miniprogramRoot": "./",
+  "condition": {}
+}

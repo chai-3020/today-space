@@ -1,0 +1,41 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/pomodoro/pomodoro",
+    "pages/notes/notes",
+    "pages/stats/stats"
+  ],
+  "window": {
+    "backgroundTextStyle": "light",
+    "navigationBarBackgroundColor": "#0d9f6d",
+    "navigationBarTitleText": "今日空间",
+    "navigationBarTextStyle": "white",
+    "backgroundColor": "#f2f4f5"
+  },
+  "tabBar": {
+    "color": "#5c6b74",
+    "selectedColor": "#0d9f6d",
+    "backgroundColor": "#ffffff",
+    "borderStyle": "black",
+    "list": [
+      {
+        "pagePath": "pages/index/index",
+        "text": "待办"
+      },
+      {
+        "pagePath": "pages/pomodoro/pomodoro",
+        "text": "番茄钟"
+      },
+      {
+        "pagePath": "pages/notes/notes",
+        "text": "便签"
+      },
+      {
+        "pagePath": "pages/stats/stats",
+        "text": "统计"
+      }
+    ]
+  },
+  "style": "v2",
+  "sitemapLocation": "sitemap.json"
+}
