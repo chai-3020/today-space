@@ -1,72 +1,43 @@
-# watch-sync.ps1 — 监控 cloudflare 开发目录,自动 git 提交并推送到 GitHub。
-# 通过 site\cloudflare junction 实时同步;变化后防抖 5 秒,自动 commit + push。
+﻿# watch-sync.ps1 — 轮询监控 cloudflare 目录,自动 git 提交并推送到 GitHub。
+# 每 5 秒检查一次变更,发现后自动 commit + push(防抖 3 次确认)。
 $ErrorActionPreference = 'Stop'
 
-$devDir   = 'D:\codex  use\cloudflare'
-$repoDir  = 'D:\codex  use\site'
-$gitExe   = 'D:\codex  use\Git\bin\git.exe'
-$logFile  = 'D:\codex  use\cloudflare\sync.log'
+$devDir  = 'D:\codex  use\cloudflare'
+$repoDir = 'D:\codex  use\site'
+$gitExe  = 'D:\codex  use\Git\bin\git.exe'
+$logFile = 'D:\codex  use\cloudflare\sync.log'
+$pollSec = 5
 
 function Write-Log($msg) {
   $line = "$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss') $msg"
-  Add-Content -Path $logFile -Value $line
+  try { Add-Content -Path $logFile -Value $line } catch { }
   Write-Host $line
 }
 
-Write-Log "watcher 启动,监控: $devDir"
-
-$watcher = New-Object System.IO.FileSystemWatcher
-$watcher.Path = $devDir
-$watcher.IncludeSubdirectories = $true
-$watcher.NotifyFilter = [System.IO.NotifyFilters]::LastWrite -bor
-                        [System.IO.NotifyFilters]::FileName -bor
-                        [System.IO.NotifyFilters]::DirectoryName -bor
-                        [System.IO.NotifyFilters]::Size
-
-$timer = New-Object System.Timers.Timer
-$timer.Interval = 5000  # 防抖窗口
-$timer.AutoReset = $false
-
-$script:changed = $false
-
-$action = {
-  $script:changed = $true
-  $timer.Stop()
-  $timer.Start()
-}
-
-Register-ObjectEvent -InputObject $watcher -EventName Changed -Action $action | Out-Null
-Register-ObjectEvent -InputObject $watcher -EventName Created  -Action $action | Out-Null
-Register-ObjectEvent -InputObject $watcher -EventName Deleted  -Action $action | Out-Null
-Register-ObjectEvent -InputObject $watcher -EventName Renamed  -Action $action | Out-Null
-
-# 防抖到期后的提交动作
-$commitAction = {
-  $timer.Stop()
-  if (-not $script:changed) { return }
-  $script:changed = $false
-
-  # 忽略 .wrangler 与日志自身的变化
+function Get-RelevantStatus {
   $status = & $gitExe -C $repoDir status --porcelain 2>&1
-  $relevant = $status | Where-Object { $_ -notmatch '\.wrangler|sync\.log' }
-  if (-not $relevant) { return }
-
-  Write-Log "检测到变更,提交中..."
-  & $gitExe -C $repoDir add -A 2>&1 | Out-Null
-  & $gitExe -C $repoDir commit -m "auto-sync: $(Get-Date -Format 'yyyy-MM-dd HH:mm')" 2>&1 | ForEach-Object { Write-Log $_ }
-  & $gitExe -C $repoDir push origin main 2>&1 | ForEach-Object { Write-Log $_ }
-  Write-Log "推送完成"
+  # 忽略 .wrangler 和 sync.log 自身
+  return @($status | Where-Object { $_ -match '^ M|^\?\?|^A |^M |^ D|^D ' -and $_ -notmatch '\.wrangler|sync\.log' })
 }
 
-$timerEvent = Register-ObjectEvent -InputObject $timer -EventName Elapsed -Action $commitAction
+Write-Log 'watcher 启动(轮询模式)'
 
-$watcher.EnableRaisingEvents = $true
-Write-Log "监控中(Ctrl+C 退出)。变更后 5 秒内自动提交并推送。"
-
-try {
-  while ($true) { Start-Sleep -Seconds 1 }
-} finally {
-  $watcher.EnableRaisingEvents = $false
-  $watcher.Dispose()
-  $timer.Dispose()
+$quietRounds = 0
+while ($true) {
+  Start-Sleep -Seconds $pollSec
+  $changes = Get-RelevantStatus
+  if ($changes.Count -gt 0) {
+    $quietRounds++
+    if ($quietRounds -ge 2) {  # 连续两次检测到(防抖),避免写入中提交
+      $quietRounds = 0
+      Write-Log ('检测到变更(' + $changes.Count + ' 项):' + ($changes -join '; '))
+      & $gitExe -C $repoDir add -A 2>&1 | Out-Null
+      $msg = 'auto-sync: ' + (Get-Date -Format 'yyyy-MM-dd HH:mm')
+      & $gitExe -C $repoDir commit -m $msg 2>&1 | ForEach-Object { Write-Log $_ }
+      & $gitExe -C $repoDir push origin main 2>&1 | ForEach-Object { Write-Log $_ }
+      Write-Log '推送完成'
+    }
+  } else {
+    $quietRounds = 0
+  }
 }
