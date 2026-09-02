@@ -3,11 +3,17 @@ const util = require('../../utils/util.js');
 
 Page({
   data: {
+    themeClass: '',
     days: [],
     totalMinutes: 0
   },
 
-  onShow() { this.loadAndDraw(); },
+  onShow() {
+    const app = getApp();
+    if (app.setNavBar) app.setNavBar();
+    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '' });
+    this.loadAndDraw();
+  },
 
   onReady() { this.drawCanvas(this.data.days || []); },
 

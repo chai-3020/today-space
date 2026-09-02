@@ -20,7 +20,8 @@ Page({
     focusLog: { byDay: {}, sessions: {} },
     showNameModal: false,
     nameInput: '',
-    dayPct: 0
+    dayPct: 0,
+    themeClass: ''
   },
 
   onLoad() {
@@ -30,6 +31,9 @@ Page({
   },
 
   onShow() {
+    const app = getApp();
+    if (app.setNavBar) app.setNavBar();
+    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '' });
     this.loadTodos();
     this.loadFocus();
     const nickname = app.globalData.nickname || '新朋友';
@@ -236,5 +240,12 @@ Page({
         }
       }
     });
+  },
+
+  // ---- 主题切换 ----
+  onToggleTheme() {
+    const app = getApp();
+    app.toggleTheme();
+    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '' });
   },
 });

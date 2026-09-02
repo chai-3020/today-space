@@ -1,5 +1,5 @@
 <!-- 专注统计 -->
-<view class="page">
+<view class="page {{themeClass}}">
   <view class="panel">
     <view class="panel-head">
       <text class="panel-title">本周专注</text>

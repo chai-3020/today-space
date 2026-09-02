@@ -1,5 +1,5 @@
 <!-- 番茄钟 -->
-<view class="page">
+<view class="page {{themeClass}}">
   <view class="panel pomo">
     <view class="mode-row">
       <text class="mode-item {{mode==='focus'?'active':''}}" data-mode="focus" bindtap="onMode">专注 25</text>

@@ -1,6 +1,7 @@
 // pages/notes/notes.js — 便签(云数据库,防抖保存)
 Page({
   data: {
+    themeClass: '',
     content: '',
     status: '已加载',
     count: 0
@@ -9,7 +10,12 @@ Page({
   saveTimer: null,
   docId: null,
 
-  onShow() { this.loadNotes(); },
+  onShow() {
+    const app = getApp();
+    if (app.setNavBar) app.setNavBar();
+    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '' });
+    this.loadNotes();
+  },
 
   async loadNotes() {
     try {

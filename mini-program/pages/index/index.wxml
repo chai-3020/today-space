@@ -1,10 +1,10 @@
 <!-- 首页:概览 + 待办 -->
-<view class="page">
+<view class="page {{themeClass}}">
   <!-- 概览卡片 -->
   <view class="panel overview">
     <view class="overview-head">
       <text class="greeting" bindtap="onEditName">{{greeting}}，{{nickname}}<text class="name-edit-hint"> ✎</text></text>
-      <text class="clock">{{clock}}</text>
+      <view class="clock-row"><text class="clock">{{clock}}</text><text class="theme-btn" bindtap="onToggleTheme">{{themeClass === 'theme-dark' ? '☀️ 白天' : '🌙 夜间'}}</text></view>
     </view>
     <view class="date-line">{{dateLine}}</view>
     <view class="stat-row">

@@ -9,6 +9,7 @@ const MODES = {
 
 Page({
   data: {
+    themeClass: '',
     mode: 'focus',
     timer: '25:00',
     note: '保持专注',
@@ -44,6 +45,9 @@ Page({
   },
 
   onShow() {
+    const app = getApp();
+    if (app.setNavBar) app.setNavBar();
+    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '' });
     this.loadToday();
     // 从后台回来:如果计时器本应运行,校准剩余时间
     if (this.data.running && this.endAt > 0) {
