@@ -21,6 +21,7 @@ Page({
     showNameModal: false,
     nameInput: '',
     dayPct: 0,
+    noDoneLine: false,
     themeClass: '',
     colorClass: ''
   },

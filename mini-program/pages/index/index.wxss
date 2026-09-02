@@ -18,7 +18,8 @@
 .seg-item { flex: 1; text-align: center; padding: 10rpx 0; font-size: 26rpx; color: var(--muted); border-radius: 10rpx; }
 .seg-item.active { background: var(--panel); color: var(--accent); font-weight: 600; box-shadow: 0 1px 2px rgba(0,0,0,0.08); }
 .todo-item { display: flex; align-items: center; gap: 16rpx; padding: 18rpx 0; border-bottom: 1px solid var(--line); }
-.todo-item.done .todo-text { text-decoration: line-through; color: var(--muted); }
+.todo-item.done .todo-text.done-line { text-decoration: line-through; color: var(--muted); }
+.todo-item.done .todo-text { color: var(--muted); }
 .todo-check { width: 44rpx; height: 44rpx; border: 2rpx solid var(--line); border-radius: 50%; text-align: center; line-height: 40rpx; font-size: 28rpx; color: transparent; flex: none; }
 .todo-check.checked { background: var(--accent); border-color: var(--accent); color: var(--panel); }
 .todo-text { flex: 1; font-size: 28rpx; word-break: break-all; }
