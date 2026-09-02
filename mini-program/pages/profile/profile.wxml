@@ -1,36 +1,88 @@
 <view class="page {{themeClass}}">
-  <view class="panel profile-card">
-    <view class="avatar">👤</view>
-    <view class="profile-info">
-      <text class="profile-name">{{nickname || '新朋友'}}</text>
-      <text class="profile-sub">微信用户 · 今日空间</text>
+  <!-- 我的 -->
+  <view class="section-title">我的</view>
+  <view class="panel">
+    <view class="setting-item">
+      <view class="setting-left"><text class="setting-icon">👤</text><text class="setting-name">账号</text></view>
+      <view class="setting-right"><text class="setting-value">{{nickname || '已登录'}}</text><text class="setting-arrow">›</text></view>
     </view>
-    <view class="edit-btn" bindtap="onEditName">改昵称</view>
+    <view class="setting-item" bindtap="goCountdown">
+      <view class="setting-left"><text class="setting-icon">🎯</text><text class="setting-name">未来倒计时</text></view>
+      <text class="setting-arrow">›</text>
+    </view>
+    <view class="setting-item" bindtap="goStats">
+      <view class="setting-left"><text class="setting-icon">📊</text><text class="setting-name">历史时间轴</text></view>
+      <text class="setting-arrow">›</text>
+    </view>
+    <view class="setting-item" bindtap="onEditName">
+      <view class="setting-left"><text class="setting-icon">✏️</text><text class="setting-name">修改昵称</text></view>
+      <text class="setting-arrow">›</text>
+    </view>
   </view>
 
+  <!-- 外观 | 主题 -->
+  <view class="section-title">外观 | 主题</view>
   <view class="panel">
-    <view class="cat-title">偏好设置</view>
-    <view class="setting-item" bindtap="onToggleTheme">
-      <view class="setting-left"><text class="setting-icon">🌗</text><text class="setting-name">主题模式</text></view>
+    <view class="setting-item">
+      <view class="setting-left"><text class="setting-icon">🌗</text><text class="setting-name">明暗主题</text><text class="setting-desc">浅色 / 深色</text></view>
       <text class="setting-value">{{themeLabel}}</text>
     </view>
+    <view class="setting-block">
+      <view class="setting-left"><text class="setting-icon">🎨</text><text class="setting-name">主题颜色搭配</text><text class="setting-desc">选择主色调</text></view>
+      <view class="color-row">
+        <view class="color-dot {{themeColor==='green'?'sel':''}}" data-color="green" bindtap="onColor" style="background:#0d9f6d;"></view>
+        <view class="color-dot {{themeColor==='blue'?'sel':''}}" data-color="blue" bindtap="onColor" style="background:#3b6fd4;"></view>
+        <view class="color-dot {{themeColor==='orange'?'sel':''}}" data-color="orange" bindtap="onColor" style="background:#e05f3a;"></view>
+        <view class="color-dot {{themeColor==='purple'?'sel':''}}" data-color="purple" bindtap="onColor" style="background:#7c5cd6;"></view>
+        <view class="color-dot {{themeColor==='pink'?'sel':''}}" data-color="pink" bindtap="onColor" style="background:#d6538c;"></view>
+      </view>
+    </view>
   </view>
 
+  <!-- 专注计时 -->
+  <view class="section-title">专注计时</view>
   <view class="panel">
-    <view class="cat-title">关于</view>
-    <view class="setting-item">
-      <view class="setting-left"><text class="setting-icon">ℹ️</text><text class="setting-name">版本</text></view>
-      <text class="setting-value">1.1.0</text>
+    <view class="setting-item" bindtap="onEditMotto">
+      <view class="setting-left"><text class="setting-icon">💬</text><text class="setting-name">自定义番茄钟格言</text></view>
+      <view class="setting-right"><text class="setting-value">{{motto || '默认'}}</text><text class="setting-arrow">›</text></view>
     </view>
-    <view class="setting-item">
-      <view class="setting-left"><text class="setting-icon">🎯</text><text class="setting-name">关于今日空间</text></view>
-      <text class="setting-value">待办·番茄钟·便签·统计</text>
+    <view class="setting-item" bindtap="goPomodoro">
+      <view class="setting-left"><text class="setting-icon">⏱️</text><text class="setting-name">自定义休息时间</text></view>
+      <text class="setting-value">{{restMin}} 分钟</text>
+    </view>
+    <view class="setting-item" bindtap="onToggleSound">
+      <view class="setting-left"><text class="setting-icon">🔔</text><text class="setting-name">计时完成提示音</text></view>
+      <view class="switch {{soundOn?'on':''}}" data-key="soundOn" bindtap="onToggleSound"><view class="switch-dot"></view></view>
+    </view>
+    <view class="setting-item" bindtap="onToggleMidnight">
+      <view class="setting-left"><text class="setting-icon">🌙</text><text class="setting-name">午夜模式</text><text class="setting-desc">开启后,0-4点新计时计入前一天</text></view>
+      <view class="switch {{midnightOn?'on':''}}" bindtap="onToggleMidnight"><view class="switch-dot"></view></view>
+    </view>
+    <view class="setting-item" bindtap="onToggleFixedSort">
+      <view class="setting-left"><text class="setting-icon">📌</text><text class="setting-name">固定排序</text><text class="setting-desc">已完成的待办不清底</text></view>
+      <view class="switch {{fixedSort?'on':''}}" bindtap="onToggleFixedSort"><view class="switch-dot"></view></view>
+    </view>
+    <view class="setting-item" bindtap="onToggleDoneLine">
+      <view class="setting-left"><text class="setting-icon">🚫</text><text class="setting-name">不在待办名称上划完成线</text><text class="setting-desc">完成后保留原文字</text></view>
+      <view class="switch {{noDoneLine?'on':''}}" bindtap="onToggleDoneLine"><view class="switch-dot"></view></view>
     </view>
   </view>
 
   <button class="logout-btn" bindtap="onLogout">退出登录</button>
 
-  <!-- 改昵称弹窗 -->
+  <!-- 格言弹窗 -->
+  <view class="modal-mask" wx:if="{{showMotto}}" bindtap="closeMotto">
+    <view class="modal-card" catchtap="noop">
+      <view class="modal-title">番茄钟格言</view>
+      <input class="modal-input" placeholder="写一句激励自己的话" maxlength="30" value="{{mottoInput}}" bindinput="onMottoInput" />
+      <view class="modal-actions">
+        <view class="modal-btn cancel" bindtap="closeMotto">取消</view>
+        <view class="modal-btn ok" bindtap="saveMotto">保存</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 昵称弹窗 -->
   <view class="modal-mask" wx:if="{{showNameModal}}" bindtap="onNameCancel">
     <view class="modal-card" catchtap="noop">
       <view class="modal-title">设置昵称</view>
