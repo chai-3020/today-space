@@ -21,5 +21,6 @@
       <button class="reset-btn" bindtap="onReset">重置</button>
     </view>
     <view class="pomo-sessions">今日完成 {{todaySessions}} 个番茄 · 专注 {{todayMinutes}} 分钟</view>
+    <view class="done-banner" wx:if="{{showDoneBanner}}">🍅 专注完成!已记录 {{lastRecord}} 分钟</view>
   </view>
 </view>

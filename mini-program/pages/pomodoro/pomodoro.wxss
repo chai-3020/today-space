@@ -12,3 +12,4 @@
 .start-btn.running { background: var(--warm); }
 .reset-btn { width: 160rpx; background: var(--panel); color: var(--muted); border: 1px solid var(--line); border-radius: 999rpx; font-size: 28rpx; }
 .pomo-sessions { text-align: center; color: var(--muted); font-size: 24rpx; margin-top: 28rpx; }
+.done-banner { margin-top: 20rpx; background: var(--accent-soft); color: var(--accent); text-align: center; padding: 16rpx; border-radius: 12rpx; font-size: 26rpx; font-weight: 600; }
