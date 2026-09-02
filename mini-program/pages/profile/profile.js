@@ -82,23 +82,23 @@ Page({
   goCountdown() { wx.navigateTo({ url: '/pages/countdown/countdown' }); },
   goStats() { wx.switchTab({ url: '/pages/stats/stats' }); },
 
-  onToggleSound() {
-    const v = !this.data.soundOn;
+  onToggleSound(e) {
+    const v = e && e.detail ? e.detail.value : !this.data.soundOn;
     this.saveSettings({ soundOn: v });
     this.setData({ soundOn: v });
   },
-  onToggleMidnight() {
-    const v = !this.data.midnightOn;
+  onToggleMidnight(e) {
+    const v = e && e.detail ? e.detail.value : !this.data.midnightOn;
     this.saveSettings({ midnightOn: v });
     this.setData({ midnightOn: v });
   },
-  onToggleFixedSort() {
-    const v = !this.data.fixedSort;
+  onToggleFixedSort(e) {
+    const v = e && e.detail ? e.detail.value : !this.data.fixedSort;
     this.saveSettings({ fixedSort: v });
     this.setData({ fixedSort: v });
   },
-  onToggleDoneLine() {
-    const v = !this.data.noDoneLine;
+  onToggleDoneLine(e) {
+    const v = e && e.detail ? e.detail.value : !this.data.noDoneLine;
     this.saveSettings({ noDoneLine: v });
     this.setData({ noDoneLine: v });
   },

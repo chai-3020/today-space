@@ -52,7 +52,7 @@
     </view>
     <view class="setting-item" bindtap="onToggleSound">
       <view class="setting-left"><text class="setting-icon">🔔</text><text class="setting-name">计时完成提示音</text></view>
-      <view class="switch {{soundOn?'on':''}}" data-key="soundOn" bindtap="onToggleSound"><view class="switch-dot"></view></view>
+      <switch checked="{{soundOn}}" color="#0d9f6d" bindchange="onToggleSound" />
     </view>
     <view class="setting-item" bindtap="onToggleMidnight">
       <view class="setting-left"><text class="setting-icon">🌙</text><text class="setting-name">午夜模式</text><text class="setting-desc">开启后,凌晨 0-4 点的专注计时将计入前一天(适合熬夜党)</text></view>
