@@ -1,0 +1,47 @@
+<view class="page {{themeClass}}">
+  <!-- 空态引导 -->
+  <view wx:if="{{items.length===0}}" class="empty-state">
+    <text class="empty-icon">🎯</text>
+    <view class="empty-title">未来倒计时</view>
+    <view class="empty-text">未来倒计时是您对未来的小目标,您可以在其中添加"考研""高考"等计划,并设定这些计划的截止日期。</view>
+    <view class="empty-text">建立好之后,您可以在列表里随时查看剩余天数。</view>
+  </view>
+
+  <!-- 列表 -->
+  <view wx:else class="cd-list">
+    <view class="cd-item" wx:for="{{items}}" wx:key="_id">
+      <view class="cd-left">
+        <text class="cd-title">{{item.title}}</text>
+        <text class="cd-date">截止 {{item.targetDate}}</text>
+      </view>
+      <view class="cd-right">
+        <text class="cd-days {{item.urgent?'urgent':''}}">{{item.days}}<text class="cd-unit">天</text></text>
+        <text class="cd-del" data-id="{{item._id}}" bindtap="onDelete">✕</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 添加按钮 -->
+  <view class="fab" bindtap="onAdd">＋</view>
+
+  <!-- 添加弹窗 -->
+  <view class="modal-mask" wx:if="{{showModal}}" bindtap="onCancel">
+    <view class="modal-card" catchtap="noop">
+      <view class="modal-title">添加新目标</view>
+      <view class="custom-field">
+        <text class="custom-label">目标</text>
+        <input class="custom-input" placeholder="如:考研上岸" maxlength="30" value="{{title}}" bindinput="onTitleInput" />
+      </view>
+      <view class="custom-field">
+        <text class="custom-label">截止日期</text>
+        <picker mode="date" value="{{targetDate}}" bindchange="onDateChange">
+          <view class="date-chip">{{targetDate}}</view>
+        </picker>
+      </view>
+      <view class="modal-actions">
+        <view class="modal-btn cancel" bindtap="onCancel">取消</view>
+        <view class="modal-btn ok" bindtap="onSave">添加</view>
+      </view>
+    </view>
+  </view>
+</view>
