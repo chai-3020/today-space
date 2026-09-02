@@ -287,6 +287,21 @@ Page({
     this.setData({ running: false });
   },
 
+  // 归属日期:午夜模式开启时,0-4 点计入前一天
+  todayKeyHint() {
+    const s = this.getSettings();
+    if (s.midnightOn) {
+      const now = new Date();
+      const h = now.getHours();
+      if (h >= 0 && h < 4) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - 1);
+        return util.dateKey(d);
+      }
+    }
+    return util.todayKey();
+  },
+
   async onSessionComplete() {
     const mode = this.data.mode;
     const minutes = this.modes[mode].minutes;
@@ -295,7 +310,7 @@ Page({
     try {
       const res = await wx.cloud.callFunction({
         name: 'recordSession',
-        data: { type: mode, minutes, startedAt, endedAt, day: util.todayKey() }
+        data: { type: mode, minutes, startedAt, endedAt, day: this.todayKeyHint() }
       });
       const r = res.result || {};
       if (r.code === 0) {
