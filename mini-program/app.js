@@ -13,11 +13,11 @@ App({
       return;
     }
     wx.cloud.init({
-      env: 'cloud1-d9gqbbkdz44c81883', // 云开发环境 ID(部署时替换)
+      env: 'cloud1-d9gqbbkdz44c81883', // 云开发环境 ID
       traceUser: true
     });
-    this.login();
     this.initTheme();
+    this.login();
   },
 
   // 静默登录:获取 openid + 用户信息
@@ -76,11 +76,10 @@ App({
     } catch (e) {}
   },
 
-  // 手动切换主题(点按钮调用)
+  // 手动切换主题(首页按钮调用),选择存入本地,下次启动沿用
   toggleTheme() {
     this.theme = (this.theme === 'dark') ? 'light' : 'dark';
     try { wx.setStorageSync('ts-theme', this.theme); } catch (e) {}
     this.applyThemeToCurrentPage();
-  },
-
-}
+  }
+});
