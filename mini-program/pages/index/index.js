@@ -42,6 +42,16 @@ Page({
     this.setData({ nickname });
     this.loadTodos();
     this.loadFocus();
+    // 首次使用引导
+    try {
+      const shown = wx.getStorageSync('ts-guide-shown');
+      if (!shown) {
+        wx.setStorageSync('ts-guide-shown', true);
+        setTimeout(() => {
+          wx.showToast({ title: '点顶部昵称可改名', icon: 'none', duration: 2500 });
+        }, 800);
+      }
+    } catch (e) { /* ignore */ }
   },
 
   tick() {
