@@ -1,0 +1,16 @@
+.page { padding-bottom: 40rpx; }
+.card-head { display: flex; justify-content: space-between; align-items: center; }
+.card-title { font-size: 30rpx; font-weight: 700; color: var(--ink); }
+.card-meta { font-size: 22rpx; color: var(--muted); }
+.quick-grid { display: flex; margin-top: 20rpx; }
+.quick-cell { flex: 1; text-align: center; background: var(--soft); border-radius: 12rpx; padding: 20rpx 0; margin: 0 8rpx; }
+.quick-num { display: block; font-size: 40rpx; font-weight: 800; color: var(--accent); }
+.quick-label { display: block; font-size: 22rpx; color: var(--muted); margin-top: 6rpx; }
+.entry-list { margin-top: 4rpx; }
+.entry-item { display: flex; align-items: center; gap: 20rpx; padding: 20rpx 0; border-bottom: 1px solid var(--line); }
+.entry-item:last-child { border-bottom: none; }
+.entry-icon { font-size: 36rpx; }
+.entry-body { flex: 1; }
+.entry-name { display: block; font-size: 28rpx; color: var(--ink); font-weight: 600; }
+.entry-desc { display: block; font-size: 22rpx; color: var(--muted); margin-top: 4rpx; }
+.entry-arrow { font-size: 36rpx; color: var(--muted); }

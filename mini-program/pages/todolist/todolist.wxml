@@ -1,0 +1,50 @@
+<view class="page {{themeClass}}">
+  <view class="panel">
+    <view class="card-head">
+      <text class="card-title">📋 今日概览</text>
+      <text class="card-meta">{{todayKey}}</text>
+    </view>
+    <view class="quick-grid">
+      <view class="quick-cell" bindtap="goTodo">
+        <text class="quick-num">{{todoAll}}</text>
+        <text class="quick-label">待办</text>
+      </view>
+      <view class="quick-cell" bindtap="goTodo">
+        <text class="quick-num">{{todoDone}}</text>
+        <text class="quick-label">已完成</text>
+      </view>
+      <view class="quick-cell" bindtap="goStats">
+        <text class="quick-num">{{focusMins}}</text>
+        <text class="quick-label">今日专注分</text>
+      </view>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="card-head">
+      <text class="card-title">🧭 快捷入口</text>
+    </view>
+    <view class="entry-list">
+      <view class="entry-item" bindtap="goTodo">
+        <text class="entry-icon">📋</text>
+        <view class="entry-body"><text class="entry-name">待办清单</text><text class="entry-desc">管理今天要做的事</text></view>
+        <text class="entry-arrow">›</text>
+      </view>
+      <view class="entry-item" bindtap="goPomodoro">
+        <text class="entry-icon">🍅</text>
+        <view class="entry-body"><text class="entry-name">番茄钟</text><text class="entry-desc">专注计时与时间轴</text></view>
+        <text class="entry-arrow">›</text>
+      </view>
+      <view class="entry-item" bindtap="goNotes">
+        <text class="entry-icon">📝</text>
+        <view class="entry-body"><text class="entry-name">便签</text><text class="entry-desc">随手记点什么</text></view>
+        <text class="entry-arrow">›</text>
+      </view>
+      <view class="entry-item" bindtap="goStats">
+        <text class="entry-icon">📊</text>
+        <view class="entry-body"><text class="entry-name">数据统计</text><text class="entry-desc">累计/分布/年度</text></view>
+        <text class="entry-arrow">›</text>
+      </view>
+    </view>
+  </view>
+</view>
