@@ -1,10 +1,14 @@
-<!-- 番茄钟 -->
+<!-- 番茄钟(自定义时长 + 24h 时间轴 + 会话流水) -->
 <view class="page {{themeClass}}">
+  <!-- 计时器面板 -->
   <view class="panel pomo">
     <view class="mode-row">
-      <text class="mode-item {{mode==='focus'?'active':''}}" data-mode="focus" bindtap="onMode">专注 25</text>
-      <text class="mode-item {{mode==='short'?'active':''}}" data-mode="short" bindtap="onMode">短休 5</text>
-      <text class="mode-item {{mode==='long'?'active':''}}" data-mode="long" bindtap="onMode">长休 15</text>
+      <text class="mode-item {{mode==='focus'?'active':''}}" data-mode="focus" bindtap="onMode">{{modeFocusLabel}}</text>
+      <text class="mode-item {{mode==='short'?'active':''}}" data-mode="short" bindtap="onMode">{{modeShortLabel}}</text>
+      <text class="mode-item {{mode==='long'?'active':''}}" data-mode="long" bindtap="onMode">{{modeLongLabel}}</text>
+    </view>
+    <view class="custom-row">
+      <text class="custom-btn" bindtap="openCustom">⚙️ 自定义时长</text>
     </view>
 
     <view class="ring-wrap">
@@ -21,6 +25,65 @@
       <button class="reset-btn" bindtap="onReset">重置</button>
     </view>
     <view class="pomo-sessions">今日完成 {{todaySessions}} 个番茄 · 专注 {{todayMinutes}} 分钟</view>
-    <view class="done-banner" wx:if="{{showDoneBanner}}">🍅 专注完成!已记录 {{lastRecord}} 分钟</view>
+    <view class="done-banner" wx:if="{{showDoneBanner}}">🍅 完成!已记录 {{lastRecord}} 分钟</view>
+  </view>
+
+  <!-- 自定义时长弹层 -->
+  <view class="modal-mask" wx:if="{{showCustom}}" bindtap="closeCustom">
+    <view class="modal-card" catchtap="noop">
+      <view class="modal-title">自定义时长(分钟)</view>
+      <view class="custom-field">
+        <text class="custom-label">🍅 专注</text>
+        <input class="custom-input" type="number" value="{{cFocus}}" bindinput="onCFocus" />
+      </view>
+      <view class="custom-field">
+        <text class="custom-label">💧 短休</text>
+        <input class="custom-input" type="number" value="{{cShort}}" bindinput="onCShort" />
+      </view>
+      <view class="custom-field">
+        <text class="custom-label">☕ 长休</text>
+        <input class="custom-input" type="number" value="{{cLong}}" bindinput="onCLong" />
+      </view>
+      <view class="modal-tip">1-180 分钟整数,保存后立即生效</view>
+      <view class="modal-actions">
+        <view class="modal-btn cancel" bindtap="closeCustom">取消</view>
+        <view class="modal-btn ok" bindtap="saveCustom">保存</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 24h 时间轴 -->
+  <view class="panel timeline-panel">
+    <view class="panel-head">
+      <text class="panel-title">今日时间轴</text>
+      <text class="panel-meta">24 小时</text>
+    </view>
+    <scroll-view class="timeline-scroll" scroll-y="true" scroll-top="{{scrollTop}}">
+      <view class="timeline" style="height: {{timelineHeight}}px;">
+        <!-- 小时刻度 + 当前时间线 -->
+        <view class="hour-line" wx:for="{{hourMarks}}" wx:key="top" style="top: {{item.top}}px;">
+          <text class="hour-label">{{item.label}}</text>
+        </view>
+        <view class="now-line" style="top: {{nowLineTop}}px;"></view>
+        <!-- 会话色块 -->
+        <view class="tl-block" wx:for="{{timelineBlocks}}" wx:key="top" style="top: {{item.top}}px; height: {{item.height}}px; background: {{item.color}};">
+          <text class="tl-block-text">{{item.title}}</text>
+        </view>
+      </view>
+    </scroll-view>
+  </view>
+
+  <!-- 会话流水 -->
+  <view class="panel">
+    <view class="panel-head">
+      <text class="panel-title">会话记录</text>
+      <text class="panel-meta">今天 · 按时间倒序</text>
+    </view>
+    <view wx:if="{{sessionList.length===0}}" class="empty-hint">今天还没有完成任何番茄,开始第一个吧 🍅</view>
+    <view class="session-item" wx:for="{{sessionList}}" wx:key="time">
+      <text class="session-dot" style="background: {{item.color}};"></text>
+      <text class="session-time">{{item.time}}</text>
+      <text class="session-label">{{item.typeLabel}}</text>
+    </view>
   </view>
 </view>

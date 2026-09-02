@@ -13,3 +13,32 @@
 .reset-btn { width: 160rpx; background: var(--panel); color: var(--muted); border: 1px solid var(--line); border-radius: 999rpx; font-size: 28rpx; }
 .pomo-sessions { text-align: center; color: var(--muted); font-size: 24rpx; margin-top: 28rpx; }
 .done-banner { margin-top: 20rpx; background: var(--accent-soft); color: var(--accent); text-align: center; padding: 16rpx; border-radius: 12rpx; font-size: 26rpx; font-weight: 600; }
+.custom-row { text-align: center; margin-bottom: 20rpx; }
+.custom-btn { font-size: 24rpx; color: var(--muted); border: 1px dashed var(--line); border-radius: 999rpx; padding: 8rpx 24rpx; }
+.modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; display: flex; align-items: center; justify-content: center; }
+.modal-card { width: 560rpx; background: var(--panel); border-radius: 20rpx; padding: 40rpx; }
+.modal-title { font-size: 32rpx; font-weight: 700; margin-bottom: 24rpx; text-align: center; color: var(--ink); }
+.custom-field { display: flex; align-items: center; gap: 20rpx; margin-bottom: 20rpx; }
+.custom-label { width: 160rpx; font-size: 28rpx; color: var(--ink); }
+.custom-input { flex: 1; border: 1px solid var(--line); border-radius: 12rpx; padding: 14rpx 20rpx; font-size: 28rpx; background: var(--soft); color: var(--ink); }
+.modal-tip { font-size: 22rpx; color: var(--muted); margin: 8rpx 0 20rpx; text-align: center; }
+.modal-actions { display: flex; gap: 20rpx; }
+.modal-btn { flex: 1; text-align: center; padding: 18rpx 0; border-radius: 12rpx; font-size: 28rpx; }
+.modal-btn.cancel { background: var(--soft); color: var(--muted); }
+.modal-btn.ok { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+
+/* 时间轴 */
+.timeline-scroll { height: 420rpx; border: 1px solid var(--line); border-radius: 12rpx; background: var(--soft); }
+.timeline { position: relative; width: 100%; }
+.hour-line { position: absolute; left: 0; right: 0; border-top: 1px solid var(--line); }
+.hour-label { position: absolute; left: 8rpx; top: -20rpx; font-size: 18rpx; color: var(--muted); background: var(--soft); padding: 0 6rpx; }
+.now-line { position: absolute; left: 0; right: 0; height: 2rpx; background: var(--warm); z-index: 2; }
+.tl-block { position: absolute; left: 90rpx; right: 16rpx; border-radius: 8rpx; display: flex; align-items: center; padding-left: 12rpx; z-index: 1; opacity: 0.85; }
+.tl-block-text { font-size: 18rpx; color: #fff; font-weight: 600; }
+
+/* 会话流水 */
+.session-item { display: flex; align-items: center; gap: 16rpx; padding: 16rpx 0; border-bottom: 1px solid var(--line); }
+.session-item:last-child { border-bottom: none; }
+.session-dot { width: 20rpx; height: 20rpx; border-radius: 50%; flex: none; }
+.session-time { font-size: 26rpx; color: var(--muted); font-variant-numeric: tabular-nums; width: 110rpx; }
+.session-label { font-size: 28rpx; color: var(--ink); }

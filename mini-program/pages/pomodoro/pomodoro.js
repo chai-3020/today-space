@@ -35,7 +35,8 @@ Page({
     timelineHeight: DAY_H,
     timelineBlocks: [],
     nowLineTop: 0,
-    sessionList: []
+    sessionList: [],
+    hourMarks: []
   },
 
   modes: JSON.parse(JSON.stringify(DEFAULT_MODES)),
@@ -46,6 +47,11 @@ Page({
   endAt: 0,
 
   onLoad() {
+    const marks = [];
+    for (let h = 0; h < 24; h++) {
+      marks.push({ top: h * HOUR_H, label: String(h).padStart(2, '0') + ':00' });
+    }
+    this.setData({ hourMarks: marks });
     this.loadCustomModes();
     this.updatePomo();
     this.loadToday();
