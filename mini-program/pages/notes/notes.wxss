@@ -1,6 +1,6 @@
 .page { padding-bottom: 40rpx; }
 .panel-head { display: flex; justify-content: space-between; align-items: center; }
-.notes-status { font-size: 24rpx; color: #5c6b74; }
+.notes-status { font-size: 24rpx; color: var(--muted); }
 .notes-area { width: 100%; min-height: 600rpx; font-size: 30rpx; line-height: 1.7; margin-top: 16rpx; box-sizing: border-box; }
 .notes-foot { margin-top: 12rpx; }
-.notes-count { font-size: 24rpx; color: #5c6b74; }
+.notes-count { font-size: 24rpx; color: var(--muted); }
