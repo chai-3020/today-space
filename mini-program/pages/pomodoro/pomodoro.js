@@ -16,7 +16,9 @@ Page({
     ringPct: '100%',
     running: false,
     todaySessions: 0,
-    todayMinutes: 0
+    todayMinutes: 0,
+    showDoneBanner: false,
+    lastRecord: 0
   },
 
   total: MODES.focus.minutes * 60,
@@ -143,7 +145,9 @@ Page({
       });
       const r = res.result || {};
       if (r.code === 0) {
+        this.setData({ showDoneBanner: true, lastRecord: r.minutes || 25 });
         wx.showToast({ title: '专注完成 +25 分钟', icon: 'success' });
+        setTimeout(() => this.setData({ showDoneBanner: false }), 4000);
         this.loadToday();
       } else {
         wx.showToast({ title: r.error || '记录失败', icon: 'none' });
