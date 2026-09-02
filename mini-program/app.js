@@ -40,7 +40,7 @@ App({
       if (this.globalData.openid) return resolve(this.globalData.userInfo);
       this.loginCallback = resolve;
     });
-  }
+  },
 
   // ---- 主题(手动切换,记忆选择;默认跟随系统) ----
   theme: '',   // 'light' | 'dark'
