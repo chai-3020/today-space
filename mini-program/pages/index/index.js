@@ -160,7 +160,7 @@ Page({
     } catch (err) {
       console.error('loadFocus failed', err);
     }
-  }
+  },
 
   noop() {},
 
