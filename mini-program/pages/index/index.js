@@ -30,11 +30,18 @@ Page({
     this.settings = this.getSettings();
     this.setData({ noDoneLine: !!this.settings.noDoneLine });
     this.tick();
+    this.startClock();
     this.init();
+  },
+
+  startClock() {
+    if (this._clockTimer) { clearInterval(this._clockTimer); }
+    this._clockTimer = setInterval(() => this.tick(), 1000);
   },
 
   onShow() {
     const app = getApp();
+    if (!this._clockTimer) this.startClock();
     if (app.setNavBar) app.setNavBar();
     this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '',
       colorClass: app.themeColor ? ({"green":"","blue":"theme-blue","orange":"theme-orange","purple":"theme-purple","pink":"theme-pink"})[app.themeColor] || '' : '' });
