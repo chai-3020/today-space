@@ -1,4 +1,10 @@
 /* app.wxss - 全局样式 + 主题变量 */
+.page {
+  min-height: 100vh;
+  background: var(--bg);
+  box-sizing: border-box;
+}
+
 page {
   --bg: #f2f4f5;
   --panel: #ffffff;
@@ -22,24 +28,23 @@ page {
   font-size: 28rpx;
 }
 
-@media (prefers-color-scheme: dark) {
-  page {
-    --bg: #14181a;
-    --panel: #1d2326;
-    --ink: #edf2f0;
-    --muted: #9aa9a4;
-    --line: #2b3438;
-    --soft: #222a2d;
-    --accent: #3cd798;
-    --accent-ink: #0b2b1e;
-    --accent-soft: #17392e;
-    --warm: #ff8a66;
-    --warm-soft: #3b241d;
-    --amber: #f0b64e;
-    --amber-soft: #3a2f17;
-    --blue: #7fa6f0;
-    --blue-soft: #1e2c44;
-  }
+/* 深色主题(手动切换:根容器加 theme-dark 类) */
+.page.theme-dark {
+  --bg: #14181a;
+  --panel: #1d2326;
+  --ink: #edf2f0;
+  --muted: #9aa9a4;
+  --line: #2b3438;
+  --soft: #222a2d;
+  --accent: #3cd798;
+  --accent-ink: #0b2b1e;
+  --accent-soft: #17392e;
+  --warm: #ff8a66;
+  --warm-soft: #3b241d;
+  --amber: #f0b64e;
+  --amber-soft: #3a2f17;
+  --blue: #7fa6f0;
+  --blue-soft: #1e2c44;
 }
 
 .panel {

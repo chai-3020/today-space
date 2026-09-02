@@ -17,6 +17,7 @@ App({
       traceUser: true
     });
     this.login();
+    this.initTheme();
   },
 
   // 静默登录:获取 openid + 用户信息
@@ -40,4 +41,46 @@ App({
       this.loginCallback = resolve;
     });
   }
-});
+
+  // ---- 主题(手动切换,记忆选择;默认跟随系统) ----
+  theme: '',   // 'light' | 'dark'
+
+  initTheme() {
+    let t = '';
+    try { t = wx.getStorageSync('ts-theme'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') {
+      try {
+        const info = wx.getSystemInfoSync();
+        t = (info.theme === 'dark') ? 'dark' : 'light';
+      } catch (e) { t = 'light'; }
+    }
+    this.theme = t;
+  },
+
+  applyThemeToCurrentPage() {
+    const pages = getCurrentPages();
+    const page = pages[pages.length - 1];
+    if (page && page.setData) {
+      page.setData({ themeClass: this.theme === 'dark' ? 'theme-dark' : '' });
+    }
+    this.setNavBar();
+  },
+
+  setNavBar() {
+    const dark = this.theme === 'dark';
+    try {
+      wx.setNavigationBarColor({
+        frontColor: '#ffffff',
+        backgroundColor: dark ? '#14181a' : '#0d9f6d'
+      });
+    } catch (e) {}
+  },
+
+  // 手动切换主题(点按钮调用)
+  toggleTheme() {
+    this.theme = (this.theme === 'dark') ? 'light' : 'dark';
+    try { wx.setStorageSync('ts-theme', this.theme); } catch (e) {}
+    this.applyThemeToCurrentPage();
+  },
+
+}
