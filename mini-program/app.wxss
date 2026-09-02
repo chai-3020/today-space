@@ -1,5 +1,11 @@
-/* app.wxss — 全局样式 */
+/* app.wxss - 全局样式 + 主题变量 */
 page {
+  --bg: #f2f4f5;
+  --panel: #ffffff;
+  --ink: #1c242a;
+  --muted: #5c6b74;
+  --line: #dfe5e8;
+  --soft: #f7f9fa;
   --accent: #0d9f6d;
   --accent-ink: #ffffff;
   --accent-soft: #e3f4ec;
@@ -9,12 +15,6 @@ page {
   --amber-soft: #fbf1dc;
   --blue: #3b6fd4;
   --blue-soft: #e7eefb;
-  --ink: #1c242a;
-  --muted: #5c6b74;
-  --line: #dfe5e8;
-  --bg: #f2f4f5;
-  --panel: #ffffff;
-  --shadow: 0 1px 2px rgba(20, 30, 35, 0.05);
 
   background: var(--bg);
   color: var(--ink);
@@ -22,11 +22,31 @@ page {
   font-size: 28rpx;
 }
 
+@media (prefers-color-scheme: dark) {
+  page {
+    --bg: #14181a;
+    --panel: #1d2326;
+    --ink: #edf2f0;
+    --muted: #9aa9a4;
+    --line: #2b3438;
+    --soft: #222a2d;
+    --accent: #3cd798;
+    --accent-ink: #0b2b1e;
+    --accent-soft: #17392e;
+    --warm: #ff8a66;
+    --warm-soft: #3b241d;
+    --amber: #f0b64e;
+    --amber-soft: #3a2f17;
+    --blue: #7fa6f0;
+    --blue-soft: #1e2c44;
+  }
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 16rpx;
-  box-shadow: var(--shadow);
+  box-shadow: 0 1px 2px rgba(20, 30, 35, 0.05);
   padding: 24rpx;
   margin: 20rpx;
 }
@@ -35,6 +55,7 @@ page {
   font-size: 32rpx;
   font-weight: 700;
   margin: 0 0 16rpx;
+  color: var(--ink);
 }
 
 .btn-primary {
