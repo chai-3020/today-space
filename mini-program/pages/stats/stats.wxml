@@ -1,27 +1,85 @@
-<!-- 专注统计 -->
 <view class="page {{themeClass}}">
-  <view class="panel">
-    <view class="panel-head">
-      <text class="panel-title">本周专注</text>
-      <text class="panel-meta">近 7 天</text>
+  <!-- 累计专注卡 -->
+  <view class="panel stat-card">
+    <view class="card-head">
+      <text class="card-title">📊 累计专注</text>
     </view>
-    <canvas type="2d" id="weekly-chart" class="chart"></canvas>
-    <view class="chart-legend">
-      <text>近 7 天合计</text>
-      <text class="weekly-total">{{totalMinutes}} 分钟</text>
+    <view class="stat-grid">
+      <view class="stat-cell">
+        <text class="stat-num">{{totalCount}}</text>
+        <text class="stat-label">次数</text>
+      </view>
+      <view class="stat-cell">
+        <text class="stat-num">{{totalHours}}<text class="stat-unit">小时</text> {{totalMins}}<text class="stat-unit">分钟</text></text>
+        <text class="stat-label">时长</text>
+      </view>
+      <view class="stat-cell">
+        <text class="stat-num">{{avgMins}}<text class="stat-unit">分钟</text></text>
+        <text class="stat-label">日均时长</text>
+      </view>
     </view>
   </view>
 
-  <view class="panel">
-    <view class="panel-head">
-      <text class="panel-title">最近 7 天明细</text>
+  <!-- 今日专注卡 -->
+  <view class="panel stat-card">
+    <view class="card-head">
+      <text class="card-title">🍅 今日专注</text>
     </view>
-    <view class="day-row" wx:for="{{days}}" wx:key="label">
-      <text class="day-label">{{item.label}}</text>
-      <view class="day-bar-track">
-        <view class="day-bar" style="width: {{item.pct}}%;"></view>
+    <view class="stat-grid">
+      <view class="stat-cell">
+        <text class="stat-num">{{todayCount}}</text>
+        <text class="stat-label">次数</text>
       </view>
-      <text class="day-value">{{item.value}}</text>
+      <view class="stat-cell">
+        <text class="stat-num">{{todayMins}}<text class="stat-unit">分钟</text></text>
+        <text class="stat-label">时长</text>
+      </view>
+      <view class="stat-cell">
+        <text class="stat-num">{{todayAbandon}}</text>
+        <text class="stat-label">放弃次数</text>
+      </view>
     </view>
+  </view>
+
+  <!-- 专注时长分布 -->
+  <view class="panel">
+    <view class="card-head">
+      <text class="card-title">📈 专注时长分布</text>
+      <view class="range-nav">
+        <text class="nav-btn" bindtap="onPrev">‹</text>
+        <text class="nav-btn" bindtap="onNext">›</text>
+      </view>
+    </view>
+    <view class="range-sub">{{rangeTitle}}</view>
+    <view class="seg-row">
+      <text class="seg-item {{rangeMode==='day'?'active':''}}" data-mode="day" bindtap="onMode">日</text>
+      <text class="seg-item {{rangeMode==='week'?'active':''}}" data-mode="week" bindtap="onMode">周</text>
+      <text class="seg-item {{rangeMode==='month'?'active':''}}" data-mode="month" bindtap="onMode">月</text>
+      <text class="seg-item {{rangeMode==='custom'?'active':''}}" data-mode="custom" bindtap="onMode">自定义</text>
+    </view>
+    <!-- 自定义日期选择 -->
+    <view class="custom-range" wx:if="{{rangeMode==='custom'}}">
+      <picker mode="date" value="{{customStart}}" bindchange="onCustomStart">
+        <view class="date-chip">{{customStart || '开始日期'}}</view>
+      </picker>
+      <text class="date-sep">至</text>
+      <picker mode="date" value="{{customEnd}}" bindchange="onCustomEnd">
+        <view class="date-chip">{{customEnd || '结束日期'}}</view>
+      </picker>
+    </view>
+    <canvas type="2d" id="dist-chart" class="chart"></canvas>
+    <view class="chart-legend">
+      <text>区间合计</text>
+      <text class="legend-total">{{distTotal}} 分钟</text>
+    </view>
+    <view wx:if="{{distTotal===0}}" class="empty-hint">无数据,点击番茄钟上的开始按钮来专注吧</view>
+  </view>
+
+  <!-- 年度数据 -->
+  <view class="panel">
+    <view class="card-head">
+      <text class="card-title">📅 年度数据 {{year}}</text>
+    </view>
+    <canvas type="2d" id="year-chart" class="chart"></canvas>
   </view>
 </view>
