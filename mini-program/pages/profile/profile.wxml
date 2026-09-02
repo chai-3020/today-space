@@ -56,15 +56,15 @@
     </view>
     <view class="setting-item" bindtap="onToggleMidnight">
       <view class="setting-left"><text class="setting-icon">🌙</text><text class="setting-name">午夜模式</text><text class="setting-desc">开启后,凌晨 0-4 点的专注计时将计入前一天(适合熬夜党)</text></view>
-      <view class="switch {{midnightOn?'on':''}}" bindtap="onToggleMidnight"><view class="switch-dot"></view></view>
+      <switch checked="{{midnightOn}}" color="#0d9f6d" bindchange="onToggleMidnight" />
     </view>
     <view class="setting-item" bindtap="onToggleFixedSort">
       <view class="setting-left"><text class="setting-icon">📌</text><text class="setting-name">固定排序</text><text class="setting-desc">开启后,已完成的待办保持原位,不会沉到列表底部</text></view>
-      <view class="switch {{fixedSort?'on':''}}" bindtap="onToggleFixedSort"><view class="switch-dot"></view></view>
+      <switch checked="{{fixedSort}}" color="#0d9f6d" bindchange="onToggleFixedSort" />
     </view>
     <view class="setting-item" bindtap="onToggleDoneLine">
       <view class="setting-left"><text class="setting-icon">🚫</text><text class="setting-name">不在待办名称上划完成线</text><text class="setting-desc">开启后,已完成待办保留原文字样式,不加删除线(仅变灰保留可读性)</text></view>
-      <view class="switch {{noDoneLine?'on':''}}" bindtap="onToggleDoneLine"><view class="switch-dot"></view></view>
+      <switch checked="{{noDoneLine}}" color="#0d9f6d" bindchange="onToggleDoneLine" />
     </view>
   </view>
 
