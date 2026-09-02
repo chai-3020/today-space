@@ -19,7 +19,8 @@ Page({
     emptyText: '这里空空的,添加第一件事吧',
     focusLog: { byDay: {}, sessions: {} },
     showNameModal: false,
-    nameInput: ''
+    nameInput: '',
+    dayPct: 0
   },
 
   onLoad() {
@@ -45,8 +46,11 @@ Page({
 
   tick() {
     const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dayPct = Math.min(100, Math.max(0, Math.round(((now - start) / 86400000) * 100)));
     this.setData({
       clock: util.fmtClock(now),
+      dayPct,
       dateLine: now.getFullYear() + ' 年 ' + (now.getMonth() + 1) + ' 月 ' + now.getDate() + ' 日 星期' + util.weekdays[now.getDay()],
       greeting: util.greeting() + ',今天也从容一点'
     });

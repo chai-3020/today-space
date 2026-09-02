@@ -17,6 +17,15 @@
         <text class="stat-label">今日专注分钟</text>
       </view>
     </view>
+    <view class="day-progress">
+      <view class="dp-label">
+        <text>今日进度</text>
+        <text>{{dayPct}}%</text>
+      </view>
+      <view class="dp-track">
+        <view class="dp-fill" style="width: {{dayPct}}%;"></view>
+      </view>
+    </view>
   </view>
 
   <!-- 待办 -->
@@ -63,4 +72,3 @@
       </view>
     </view>
   </view>
-

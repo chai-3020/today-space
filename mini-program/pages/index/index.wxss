@@ -36,3 +36,7 @@
 .modal-btn.cancel { background: var(--soft); color: var(--muted); }
 .modal-btn.ok { background: var(--accent); color: var(--panel); font-weight: 600; }
 .modal-tip { font-size: 22rpx; color: var(--muted); margin-top: 16rpx; text-align: center; }
+.day-progress { margin-top: 24rpx; }
+.dp-label { display: flex; justify-content: space-between; font-size: 24rpx; color: var(--muted); margin-bottom: 8rpx; }
+.dp-track { height: 12rpx; background: var(--line); border-radius: 999rpx; overflow: hidden; }
+.dp-fill { height: 100%; background: var(--accent); border-radius: 999rpx; transition: width 1s linear; }
