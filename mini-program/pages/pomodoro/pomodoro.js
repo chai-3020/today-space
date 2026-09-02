@@ -152,7 +152,7 @@ Page({
       console.error('recordFocus failed', err);
       wx.showToast({ title: '记录失败,请检查网络', icon: 'none' });
     }
-  }
+  },
 
   onPullDownRefresh() {    this.loadToday();
     wx.stopPullDownRefresh();

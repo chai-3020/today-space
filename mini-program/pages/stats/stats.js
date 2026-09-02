@@ -83,7 +83,7 @@ Page({
         ctx.fillText(d.label, x + bw / 2, h - 6);
       });
     });
-  }
+  },
 
   onPullDownRefresh() {    this.loadAndDraw();
     wx.stopPullDownRefresh();
