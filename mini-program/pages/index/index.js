@@ -30,7 +30,6 @@ Page({
     this.settings = this.getSettings();
     this.setData({ noDoneLine: !!this.settings.noDoneLine });
     this.tick();
-    setInterval(() => this.tick(), 1000);
     this.init();
   },
 
