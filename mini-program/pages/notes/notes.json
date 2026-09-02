@@ -1,4 +1,6 @@
 {
   "usingComponents": {},
-  "navigationBarTitleText": "便签"
+  "navigationBarTitleText": "便签",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
 }

@@ -192,4 +192,11 @@ Page({
       wx.showToast({ title: '设置失败,请检查网络', icon: 'none' });
     }
   },
+
+  onPullDownRefresh() {    this.loadTodos();
+    this.loadFocus();
+    const app = getApp();
+    this.setData({ nickname: app.globalData.nickname || '新朋友' });
+    wx.stopPullDownRefresh();
+  },
 });

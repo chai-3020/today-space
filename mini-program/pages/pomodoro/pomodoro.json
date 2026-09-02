@@ -1,4 +1,6 @@
 {
   "usingComponents": {},
-  "navigationBarTitleText": "番茄钟"
+  "navigationBarTitleText": "番茄钟",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
 }

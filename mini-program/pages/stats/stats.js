@@ -84,4 +84,8 @@ Page({
       });
     });
   }
+
+  onPullDownRefresh() {    this.loadAndDraw();
+    wx.stopPullDownRefresh();
+  },
 });

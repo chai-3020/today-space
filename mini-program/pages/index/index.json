@@ -1,4 +1,6 @@
 {
   "usingComponents": {},
-  "navigationBarTitleText": "今日空间"
+  "navigationBarTitleText": "今日空间",
+  "enablePullDownRefresh": true,
+  "backgroundTextStyle": "dark"
 }

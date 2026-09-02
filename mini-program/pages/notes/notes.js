@@ -59,4 +59,8 @@ Page({
   updateCount() {
     this.setData({ count: Array.from(this.data.content).length });
   }
+
+  onPullDownRefresh() {    this.loadNotes();
+    wx.stopPullDownRefresh();
+  },
 });
