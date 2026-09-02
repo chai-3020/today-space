@@ -203,4 +203,28 @@ Page({
     this.setData({ nickname: app.globalData.nickname || '新朋友' });
     wx.stopPullDownRefresh();
   },
+
+  // ---- 待办编辑(长按) ----
+  onEditTodo(e) {
+    const id = e.currentTarget.dataset.id;
+    const oldText = e.currentTarget.dataset.text || '';
+    wx.showModal({
+      title: '编辑待办',
+      editable: true,
+      placeholderText: '输入新内容',
+      content: oldText,
+      success: async (res) => {
+        if (!res.confirm) return;
+        const text = (res.content || '').trim();
+        if (!text) return;
+        try {
+          const db = wx.cloud.database();
+          await db.collection('todos').doc(id).update({ data: { text } });
+          this.loadTodos();
+        } catch (err) {
+          wx.showToast({ title: '保存失败', icon: 'none' });
+        }
+      }
+    });
+  },
 });

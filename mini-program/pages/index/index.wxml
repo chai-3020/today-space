@@ -49,7 +49,7 @@
     <view wx:else>
       <view class="todo-item {{item.done?'done':''}}" wx:for="{{visibleTodos}}" wx:key="_id">
         <text class="todo-check {{item.done?'checked':''}}" data-id="{{item._id}}" bindtap="onToggleTodo">{{item.done?'✓':''}}</text>
-        <text class="todo-text">{{item.text}}</text>
+        <text class="todo-text" data-id="{{item._id}}" data-text="{{item.text}}" bindlongpress="onEditTodo">{{item.text}}</text>
         <text class="todo-del" data-id="{{item._id}}" bindtap="onDeleteTodo">✕</text>
       </view>
     </view>
