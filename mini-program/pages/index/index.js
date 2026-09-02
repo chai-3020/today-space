@@ -79,7 +79,14 @@ Page({
   async loadTodos() {
     try {
       const db = wx.cloud.database();
-      const res = await db.collection('todos').orderBy('createdAt', 'desc').limit(100).get();
+      let res;
+      if (this.settings && this.settings.fixedSort) {
+        // 固定排序:仅按创建时间倒序,已完成不沉底
+        res = await db.collection('todos').orderBy('createdAt', 'desc').limit(100).get();
+      } else {
+        // 默认:未完成在前,已完成沉底
+        res = await db.collection('todos').orderBy('done', 'asc').orderBy('createdAt', 'desc').limit(100).get();
+      }
       const todos = res.data;
       this.setData({ todos, todoCount: todos.length });
       this.applyFilter();
