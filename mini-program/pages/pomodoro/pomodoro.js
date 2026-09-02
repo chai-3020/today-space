@@ -47,7 +47,15 @@ Page({
   intervalId: null,
   endAt: 0,
 
+  getSettings() {
+    try { return wx.getStorageSync('ts-settings') || {}; } catch (e) { return {}; }
+  },
+
+  motto: '',
+
   onLoad() {
+    const s = this.getSettings();
+    this.motto = s.motto || '';
     const marks = [];
     for (let h = 0; h < 24; h++) {
       marks.push({ top: h * HOUR_H, label: String(h).padStart(2, '0') + ':00' });
@@ -84,7 +92,7 @@ Page({
       if (this.remaining <= 0) {
         this.remaining = 0;
         this.stopTimer();
-        wx.vibrateLong();
+        this.doAlerts();
         this.onSessionComplete();
       }
       this.updatePomo();
@@ -224,9 +232,10 @@ Page({
     const ss = String(this.remaining % 60).padStart(2, '0');
     const m = this.modes[this.data.mode];
     const pct = Math.max(0, Math.min(100, Math.round((this.remaining / this.total) * 100)));
+    const note = this.motto || m.note;
     this.setData({
       timer: mm + ':' + ss,
-      note: m.note,
+      note: note,
       ringColor: this.data.running ? '#e05f3a' : m.color,
       ringPct: pct + '%'
     });
@@ -254,9 +263,7 @@ Page({
         if (this.remaining <= 0) {
           this.remaining = 0;
           this.stopTimer();
-          wx.vibrateLong();
-          setTimeout(() => wx.vibrateShort({ fail: () => {} }), 300);
-          setTimeout(() => wx.vibrateShort({ fail: () => {} }), 600);
+          this.doAlerts();
           this.onSessionComplete();
         }
         this.updatePomo();
