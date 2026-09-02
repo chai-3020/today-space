@@ -1,0 +1,24 @@
+.page { padding-bottom: 40rpx; }
+.profile-card { display: flex; align-items: center; gap: 20rpx; }
+.avatar { width: 96rpx; height: 96rpx; border-radius: 50%; background: var(--accent-soft); display: flex; align-items: center; justify-content: center; font-size: 44rpx; }
+.profile-info { flex: 1; }
+.profile-name { display: block; font-size: 34rpx; font-weight: 700; color: var(--ink); }
+.profile-sub { display: block; font-size: 22rpx; color: var(--muted); margin-top: 6rpx; }
+.edit-btn { font-size: 24rpx; color: var(--accent); border: 1px solid var(--accent); border-radius: 999rpx; padding: 8rpx 24rpx; }
+.cat-title { font-size: 24rpx; color: var(--muted); margin-bottom: 8rpx; }
+.setting-item { display: flex; justify-content: space-between; align-items: center; padding: 20rpx 0; border-bottom: 1px solid var(--line); }
+.setting-item:last-child { border-bottom: none; }
+.setting-left { display: flex; align-items: center; gap: 14rpx; }
+.setting-icon { font-size: 30rpx; }
+.setting-name { font-size: 28rpx; color: var(--ink); }
+.setting-value { font-size: 24rpx; color: var(--muted); }
+.logout-btn { margin: 30rpx 40rpx 0; background: var(--panel); color: var(--warm); border: 1px solid var(--line); border-radius: 12rpx; font-size: 30rpx; }
+.modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; display: flex; align-items: center; justify-content: center; }
+.modal-card { width: 560rpx; background: var(--panel); border-radius: 20rpx; padding: 40rpx; }
+.modal-title { font-size: 32rpx; font-weight: 700; margin-bottom: 24rpx; text-align: center; color: var(--ink); }
+.modal-input { border: 1px solid var(--line); border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 28rpx; background: var(--soft); color: var(--ink); }
+.modal-tip { font-size: 22rpx; color: var(--muted); margin-top: 12rpx; text-align: center; }
+.modal-actions { display: flex; gap: 20rpx; margin-top: 28rpx; }
+.modal-btn { flex: 1; text-align: center; padding: 18rpx 0; border-radius: 12rpx; font-size: 28rpx; }
+.modal-btn.cancel { background: var(--soft); color: var(--muted); }
+.modal-btn.ok { background: var(--accent); color: var(--accent-ink); font-weight: 600; }

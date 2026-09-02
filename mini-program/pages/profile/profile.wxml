@@ -1,0 +1,45 @@
+<view class="page {{themeClass}}">
+  <view class="panel profile-card">
+    <view class="avatar">👤</view>
+    <view class="profile-info">
+      <text class="profile-name">{{nickname || '新朋友'}}</text>
+      <text class="profile-sub">微信用户 · 今日空间</text>
+    </view>
+    <view class="edit-btn" bindtap="onEditName">改昵称</view>
+  </view>
+
+  <view class="panel">
+    <view class="cat-title">偏好设置</view>
+    <view class="setting-item" bindtap="onToggleTheme">
+      <view class="setting-left"><text class="setting-icon">🌗</text><text class="setting-name">主题模式</text></view>
+      <text class="setting-value">{{themeLabel}}</text>
+    </view>
+  </view>
+
+  <view class="panel">
+    <view class="cat-title">关于</view>
+    <view class="setting-item">
+      <view class="setting-left"><text class="setting-icon">ℹ️</text><text class="setting-name">版本</text></view>
+      <text class="setting-value">1.1.0</text>
+    </view>
+    <view class="setting-item">
+      <view class="setting-left"><text class="setting-icon">🎯</text><text class="setting-name">关于今日空间</text></view>
+      <text class="setting-value">待办·番茄钟·便签·统计</text>
+    </view>
+  </view>
+
+  <button class="logout-btn" bindtap="onLogout">退出登录</button>
+
+  <!-- 改昵称弹窗 -->
+  <view class="modal-mask" wx:if="{{showNameModal}}" bindtap="onNameCancel">
+    <view class="modal-card" catchtap="noop">
+      <view class="modal-title">设置昵称</view>
+      <input class="modal-input" placeholder="输入昵称(1-24位)" maxlength="24" value="{{nameInput}}" bindinput="onNameInput" />
+      <view class="modal-tip">支持中文、字母、数字、_ 和 -</view>
+      <view class="modal-actions">
+        <view class="modal-btn cancel" bindtap="onNameCancel">取消</view>
+        <view class="modal-btn ok" bindtap="onNameConfirm">保存</view>
+      </view>
+    </view>
+  </view>
+</view>
