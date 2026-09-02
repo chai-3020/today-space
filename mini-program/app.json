@@ -1,9 +1,11 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/todolist/todolist",
+    "pages/stats/stats",
+    "pages/profile/profile",
     "pages/pomodoro/pomodoro",
-    "pages/notes/notes",
-    "pages/stats/stats"
+    "pages/notes/notes"
   ],
   "window": {
     "backgroundTextStyle": "light",
@@ -23,16 +25,16 @@
         "text": "待办"
       },
       {
-        "pagePath": "pages/pomodoro/pomodoro",
-        "text": "番茄钟"
-      },
-      {
-        "pagePath": "pages/notes/notes",
-        "text": "便签"
+        "pagePath": "pages/todolist/todolist",
+        "text": "待办集"
       },
       {
         "pagePath": "pages/stats/stats",
-        "text": "统计"
+        "text": "数据统计"
+      },
+      {
+        "pagePath": "pages/profile/profile",
+        "text": "我的"
       }
     ]
   },

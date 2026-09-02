@@ -38,8 +38,8 @@ Page({
   },
 
   goTodo() { wx.switchTab({ url: '/pages/index/index' }); },
-  goPomodoro() { wx.switchTab({ url: '/pages/pomodoro/pomodoro' }); },
-  goNotes() { wx.switchTab({ url: '/pages/notes/notes' }); },
+  goPomodoro() { wx.navigateTo({ url: '/pages/pomodoro/pomodoro' }); },
+  goNotes() { wx.navigateTo({ url: '/pages/notes/notes' }); },
   goStats() { wx.switchTab({ url: '/pages/stats/stats' }); },
 
   onPullDownRefresh() {

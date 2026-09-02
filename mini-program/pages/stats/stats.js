@@ -370,7 +370,7 @@ Page({
 
   // 空态:引导去番茄钟
   goPomodoro() {
-    wx.switchTab({ url: '/pages/pomodoro/pomodoro' });
+    wx.navigateTo({ url: '/pages/pomodoro/pomodoro' });
   },
 
   onPullDownRefresh() {
