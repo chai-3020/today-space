@@ -4,6 +4,7 @@ const util = require('../../utils/util.js');
 Page({
   data: {
     themeClass: '',
+    colorClass: '',
     todayKey: '',
     todoAll: 0,
     todoDone: 0,
@@ -13,7 +14,8 @@ Page({
   onShow() {
     const app = getApp();
     if (app.setNavBar) app.setNavBar();
-    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '', todayKey: util.todayKey() });
+    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '',
+      colorClass: app.themeColor ? ({"green":"","blue":"theme-blue","orange":"theme-orange","purple":"theme-purple","pink":"theme-pink"})[app.themeColor] || '' : '', todayKey: util.todayKey() });
     this.loadData();
   },
 

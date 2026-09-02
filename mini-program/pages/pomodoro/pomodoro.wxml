@@ -1,5 +1,5 @@
 <!-- 番茄钟(自定义时长 + 24h 时间轴 + 会话流水) -->
-<view class="page {{themeClass}}">
+<view class="page {{themeClass}} {{colorClass}}">
   <!-- 计时器面板 -->
   <view class="panel pomo">
     <view class="mode-row">

@@ -15,6 +15,7 @@ const DAY_H = 24 * HOUR_H;
 Page({
   data: {
     themeClass: '',
+    colorClass: '',
     mode: 'focus',
     timer: '25:00',
     note: '保持专注',
@@ -74,7 +75,8 @@ Page({
   onShow() {
     const app = getApp();
     if (app.setNavBar) app.setNavBar();
-    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '' });
+    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '',
+      colorClass: app.themeColor ? ({"green":"","blue":"theme-blue","orange":"theme-orange","purple":"theme-purple","pink":"theme-pink"})[app.themeColor] || '' : '' });
     this.loadToday();
     this.loadSessions();
     if (this.data.running && this.endAt > 0) {

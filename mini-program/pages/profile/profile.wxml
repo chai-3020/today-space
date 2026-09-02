@@ -1,4 +1,4 @@
-<view class="page {{themeClass}}">
+<view class="page {{themeClass}} {{colorClass}}">
   <!-- 我的 -->
   <view class="section-title">我的</view>
   <view class="panel">

@@ -44,6 +44,7 @@ App({
 
   // ---- 主题(手动切换,记忆选择;默认跟随系统) ----
   theme: '',   // 'light' | 'dark'
+  themeColor: 'green',  // 主色调(绿/蓝/橙/紫/粉)
 
   initTheme() {
     let t = '';
@@ -55,6 +56,17 @@ App({
       } catch (e) { t = 'light'; }
     }
     this.theme = t;
+    // 主色调
+    try {
+      const s = wx.getStorageSync('ts-settings') || {};
+      this.themeColor = s.themeColor || 'green';
+    } catch (e) {}
+  },
+
+  // 切换主题色
+  setThemeColor(color) {
+    this.themeColor = color;
+    this.applyThemeToCurrentPage();
   },
 
   applyThemeToCurrentPage() {

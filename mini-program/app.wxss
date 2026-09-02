@@ -28,6 +28,13 @@ page {
   font-size: 28rpx;
 }
 
+
+/* ---- 主题色(由「我的-主题颜色搭配」选择)---- */
+.theme-blue { --accent: #3b6fd4; --accent-ink: #ffffff; --accent-soft: #e7eefb; }
+.theme-orange { --accent: #e05f3a; --accent-ink: #ffffff; --accent-soft: #fdeee7; }
+.theme-purple { --accent: #7c5cd6; --accent-ink: #ffffff; --accent-soft: #efe9fb; }
+.theme-pink { --accent: #d6538c; --accent-ink: #ffffff; --accent-soft: #fbe8f1; }
+
 /* 深色主题(手动切换:根容器加 theme-dark 类) */
 .page.theme-dark {
   --bg: #14181a;

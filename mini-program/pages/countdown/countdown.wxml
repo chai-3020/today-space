@@ -1,4 +1,4 @@
-<view class="page {{themeClass}}">
+<view class="page {{themeClass}} {{colorClass}}">
   <!-- 空态引导 -->
   <view wx:if="{{items.length===0}}" class="empty-state">
     <text class="empty-icon">🎯</text>

@@ -4,6 +4,7 @@ const app = getApp();
 Page({
   data: {
     themeClass: '',
+    colorClass: '',
     nickname: '',
     themeLabel: '浅色',
     themeColor: 'green',

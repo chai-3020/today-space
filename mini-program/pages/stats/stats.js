@@ -4,6 +4,7 @@ const util = require('../../utils/util.js');
 Page({
   data: {
     themeClass: '',
+    colorClass: '',
     // 累计卡
     totalCount: 0,
     totalHours: 0,
@@ -44,7 +45,8 @@ Page({
   onShow() {
     const app = getApp();
     if (app.setNavBar) app.setNavBar();
-    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '' });
+    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '',
+      colorClass: app.themeColor ? ({"green":"","blue":"theme-blue","orange":"theme-orange","purple":"theme-purple","pink":"theme-pink"})[app.themeColor] || '' : '' });
     this.loadAll();
   },
 

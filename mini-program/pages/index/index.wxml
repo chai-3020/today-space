@@ -1,5 +1,5 @@
 <!-- 首页:概览 + 待办 -->
-<view class="page {{themeClass}}">
+<view class="page {{themeClass}} {{colorClass}}">
   <!-- 概览卡片 -->
   <view class="panel overview">
     <view class="overview-head">

@@ -21,7 +21,8 @@ Page({
     showNameModal: false,
     nameInput: '',
     dayPct: 0,
-    themeClass: ''
+    themeClass: '',
+    colorClass: ''
   },
 
   onLoad() {
@@ -33,7 +34,8 @@ Page({
   onShow() {
     const app = getApp();
     if (app.setNavBar) app.setNavBar();
-    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '' });
+    this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '',
+      colorClass: app.themeColor ? ({"green":"","blue":"theme-blue","orange":"theme-orange","purple":"theme-purple","pink":"theme-pink"})[app.themeColor] || '' : '' });
     this.loadTodos();
     this.loadFocus();
     const nickname = app.globalData.nickname || '新朋友';
