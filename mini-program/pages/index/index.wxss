@@ -26,3 +26,13 @@
 .todo-foot { display: flex; justify-content: space-between; margin-top: 16rpx; }
 .todo-foot-count { font-size: 24rpx; color: #5c6b74; }
 .clear-btn { font-size: 24rpx; color: #e05f3a; }
+.name-edit-hint { font-size: 22rpx; color: #c5ced4; margin-left: 8rpx; font-weight: 400; }
+.modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 90; display: flex; align-items: center; justify-content: center; }
+.modal-card { width: 560rpx; background: #fff; border-radius: 20rpx; padding: 40rpx; }
+.modal-title { font-size: 32rpx; font-weight: 700; margin-bottom: 24rpx; text-align: center; }
+.modal-input { border: 1px solid #dfe5e8; border-radius: 12rpx; padding: 16rpx 20rpx; font-size: 28rpx; width: 100%; box-sizing: border-box; }
+.modal-actions { display: flex; gap: 20rpx; margin-top: 32rpx; }
+.modal-btn { flex: 1; text-align: center; padding: 18rpx 0; border-radius: 12rpx; font-size: 28rpx; }
+.modal-btn.cancel { background: #f2f4f5; color: #5c6b74; }
+.modal-btn.ok { background: #0d9f6d; color: #fff; font-weight: 600; }
+.modal-tip { font-size: 22rpx; color: #9aa9a4; margin-top: 16rpx; text-align: center; }

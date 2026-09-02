@@ -3,7 +3,7 @@
   <!-- 概览卡片 -->
   <view class="panel overview">
     <view class="overview-head">
-      <text class="greeting">{{greeting}}，{{nickname}}</text>
+      <text class="greeting" bindtap="onEditName">{{greeting}}，{{nickname}}<text class="name-edit-hint"> ✎</text></text>
       <text class="clock">{{clock}}</text>
     </view>
     <view class="date-line">{{dateLine}}</view>
@@ -50,3 +50,17 @@
     </view>
   </view>
 </view>
+
+  <!-- 昵称设置弹窗 -->
+  <view class="modal-mask" wx:if="{{showNameModal}}" bindtap="onNameCancel">
+    <view class="modal-card" catchtap="noop">
+      <view class="modal-title">设置昵称</view>
+      <input class="modal-input" placeholder="输入昵称(1-24位)" maxlength="24" value="{{nameInput}}" bindinput="onNameInput" />
+      <view class="modal-tip">支持中文、字母、数字、_ 和 -</view>
+      <view class="modal-actions">
+        <view class="modal-btn cancel" bindtap="onNameCancel">取消</view>
+        <view class="modal-btn ok" bindtap="onNameConfirm">保存</view>
+      </view>
+    </view>
+  </view>
+

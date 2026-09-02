@@ -17,7 +17,9 @@ Page({
     todoCount: 0,
     todoInput: '',
     emptyText: '这里空空的,添加第一件事吧',
-    focusLog: { byDay: {}, sessions: {} }
+    focusLog: { byDay: {}, sessions: {} },
+    showNameModal: false,
+    nameInput: ''
   },
 
   onLoad() {
@@ -159,4 +161,35 @@ Page({
       console.error('loadFocus failed', err);
     }
   }
+
+  noop() {},
+
+  // ---- 昵称设置 ----
+  onEditName() {
+    const app = getApp();
+    this.setData({ showNameModal: true, nameInput: app.globalData.nickname || '' });
+  },
+  onNameInput(e) { this.setData({ nameInput: e.detail.value }); },
+  onNameCancel() { this.setData({ showNameModal: false }); },
+  async onNameConfirm() {
+    const name = (this.data.nameInput || '').trim();
+    if (!name) { wx.showToast({ title: '昵称不能为空', icon: 'none' }); return; }
+    if (!/^[\u4e00-\u9fa5A-Za-z0-9_-]+$/.test(name)) {
+      wx.showToast({ title: '只能含中文、字母、数字、_ 和 -', icon: 'none' }); return;
+    }
+    try {
+      const res = await wx.cloud.callFunction({ name: 'updateProfile', data: { name } });
+      const r = res.result || {};
+      if (r.code === 0) {
+        const app = getApp();
+        app.globalData.nickname = name;
+        this.setData({ nickname: name, showNameModal: false });
+        wx.showToast({ title: '昵称已更新', icon: 'success' });
+      } else {
+        wx.showToast({ title: r.error || '设置失败', icon: 'none' });
+      }
+    } catch (err) {
+      wx.showToast({ title: '设置失败,请检查网络', icon: 'none' });
+    }
+  },
 });
