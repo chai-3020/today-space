@@ -5,7 +5,8 @@
     "pages/stats/stats",
     "pages/profile/profile",
     "pages/pomodoro/pomodoro",
-    "pages/notes/notes"
+    "pages/notes/notes",
+    "pages/countdown/countdown"
   ],
   "window": {
     "backgroundTextStyle": "light",
