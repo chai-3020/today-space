@@ -22,6 +22,7 @@ Page({
   total: MODES.focus.minutes * 60,
   remaining: MODES.focus.minutes * 60,
   intervalId: null,
+  endAt: 0,   // 结束时间戳(后台计时用)
 
   onLoad() {
     this.updatePomo();
@@ -33,11 +34,27 @@ Page({
   },
 
   onHide() {
-    this.stopTimer();
-    this.updatePomo();
+    // 切后台不停表:endAt 时间戳继续走,onShow 回来时校准
+    if (this.data.running && this.intervalId) {
+      clearInterval(this.intervalId); // 后台 interval 不可靠,回来再校准
+      this.intervalId = null;
+    }
   },
 
-  onShow() { this.loadToday(); },
+  onShow() {
+    this.loadToday();
+    // 从后台回来:如果计时器本应运行,校准剩余时间
+    if (this.data.running && this.endAt > 0) {
+      this.remaining = Math.max(0, Math.round((this.endAt - Date.now()) / 1000));
+      if (this.remaining <= 0) {
+        this.remaining = 0;
+        this.stopTimer();
+        wx.vibrateLong();
+        if (this.data.mode === 'focus') this.recordFocus();
+      }
+      this.updatePomo();
+    }
+  },
 
   async loadToday() {
     try {
@@ -84,13 +101,16 @@ Page({
       this.stopTimer();
     } else {
       if (this.remaining <= 0) this.remaining = this.total;
+      // 时间戳计时:记下结束时刻,后台切回时按真实时间校准
+      this.endAt = Date.now() + this.remaining * 1000;
       this.setData({ running: true });
       this.intervalId = setInterval(() => {
-        this.remaining -= 1;
+        this.remaining = Math.max(0, Math.round((this.endAt - Date.now()) / 1000));
         if (this.remaining <= 0) {
           this.remaining = 0;
           this.stopTimer();
           wx.vibrateLong();
+          setTimeout(() => wx.vibrateShort({ fail: () => {} }), 300);
           if (this.data.mode === 'focus') this.recordFocus();
         }
         this.updatePomo();
@@ -110,6 +130,7 @@ Page({
       clearInterval(this.intervalId);
       this.intervalId = null;
     }
+    this.endAt = 0;
     this.setData({ running: false });
   },
 
