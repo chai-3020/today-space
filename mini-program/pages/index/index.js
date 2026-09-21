@@ -1,5 +1,7 @@
 // pages/index/index.js — 概览 + 待办(云数据库)
 const util = require('../../utils/util.js');
+const themeUtil = require('../../utils/theme.js');
+const statsApi = require('../../utils/focus-stats.js');
 const app = getApp();
 
 Page({
@@ -52,7 +54,7 @@ Page({
     if (!this._clockTimer) this.startClock();
     if (app.setNavBar) app.setNavBar();
     this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '',
-      colorClass: app.themeColor ? ({"green":"","blue":"theme-blue","orange":"theme-orange","purple":"theme-purple","pink":"theme-pink"})[app.themeColor] || '' : '' });
+      colorClass: themeUtil.colorClass(app.themeColor) });
     this.loadTodos();
     this.loadFocus();
     const nickname = app.globalData.nickname || '新朋友';
@@ -206,11 +208,12 @@ Page({
   },
 
   // ---- 专注 ----
-  async loadFocus() {
+  async loadFocus(force) {
     try {
       // 2026-09-21:改走云函数服务端聚合(原来在这里拉 focus_log 全量再自己累加)
-      const res = await wx.cloud.callFunction({ name: 'getFocusStats' });
-      const r = res.result || {};
+      // 2026-09-21d:再包一层 utils/focus-stats.js 的会话内缓存 —— 首页/番茄钟/
+      // 统计/待办集四个页面 onShow 都读同一份数据,缓存后一次逛 app 只请求一次。
+      const r = await statsApi.getFocusStats(!!force);
       if (r.code !== 0) {
         console.error('getFocusStats failed', r.error);
         return;
