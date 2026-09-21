@@ -175,13 +175,21 @@ Page({
 
   async onClearDone() {
     const doneList = this.data.todos.filter((t) => t.done);
+    if (!doneList.length) return;
     try {
-      const db = wx.cloud.database();
-      for (const t of doneList) {
-        await db.collection('todos').doc(t._id).remove();
+      // 2026-09-21 改造:原来在客户端 for-await 逐条 remove(),
+      // N 条就是 N 次网络往返,中途失败还会留下"删了一半"。
+      // 改为云函数批量删除(服务端按 openid + done 一次删掉)。
+      const res = await wx.cloud.callFunction({ name: 'clearDoneTodos' });
+      const r = res.result || {};
+      if (r.code === 0) {
+        wx.showToast({ title: `已清除 ${r.removed || doneList.length} 条`, icon: 'success' });
+        this.loadTodos();
+      } else {
+        wx.showToast({ title: r.error || '清除失败', icon: 'none' });
       }
-      this.loadTodos();
     } catch (err) {
+      console.error('clearDoneTodos failed', err);
       wx.showToast({ title: '清除失败', icon: 'none' });
     }
   },
