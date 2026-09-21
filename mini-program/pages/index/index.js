@@ -200,11 +200,13 @@ Page({
       const byDay = {};
       const sessions = {};
       for (const r of res.data) {
-        byDay[r.day] = (byDay[r.day] || 0) + r.minutes;
-        sessions[r.day] = (sessions[r.day] || 0) + r.sessions;
+        if (!r || !r.day) continue;                       // 跳过脏数据,避免 NaN 污染整页
+        byDay[r.day] = (byDay[r.day] || 0) + (Number(r.minutes) || 0);
+        sessions[r.day] = (sessions[r.day] || 0) + (Number(r.sessions) || 0);
       }
       this.setData({ focusLog: { byDay, sessions } });
-      const today = util.todayKey();
+      // 归属日期走 util.dayKeyFor:与番茄钟的写入端、其它页面保持同一口径(午夜模式)
+      const today = util.dayKeyFor(this.getSettings());
       this.setData({ statFocus: byDay[today] || 0 });
     } catch (err) {
       console.error('loadFocus failed', err);
