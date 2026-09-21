@@ -21,10 +21,15 @@ Page({
 
   async loadData() {
     try {
+      const app = getApp();
+      const openid = await app.waitOpenid();
+      if (!openid) console.warn('todolist loadData: openid 未就绪,focus_log 查询已跳过');
       const db = wx.cloud.database();
       const [todoRes, focusRes] = await Promise.all([
         db.collection('todos').limit(100).get(),
-        db.collection('focus_log').limit(1000).get()
+        openid
+          ? db.collection('focus_log').where({ openid }).limit(1000).get()
+          : Promise.resolve({ data: [] })
       ]);
       const todos = todoRes.data || [];
       const done = todos.filter((t) => t.done).length;
