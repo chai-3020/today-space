@@ -144,7 +144,10 @@ this.onSessionComplete();   // ← 永远执行不到
 
 **建议**:补一个 `doAlerts()`(按 `ts-settings.soundOn` 决定震动/音频),并把"提示"与"上报"用独立 `try/catch` 隔开,保证上报不被提示逻辑的异常打断。
 
-## 二、审查中发现的其它问题(H 系列,均未修改,待你决策)
+## 二、审查中发现的问题(H 系列)
+
+> **本节的 H1–H5、M2 均已在 2026-09-21 修复**(见第一节第 4–9 条),下面保留的是**原始发现记录**,其中引用的行号与"当前行为"描述是修复前的状态,仅作追溯用。
+> **仍未修的**是本节 A–G 各条(M6 性能、便签单文档模型、串行删除等),以及云函数信任客户端 `day` 的防伪造问题。
 
 ### H2.【高】番茄钟页的 30 秒轮询定时器无法清理(真实泄漏)
 
@@ -267,17 +270,18 @@ db.collection('focus_log').where({ openid }).limit(1000).get()
 | `cloudfunctions/login/index.js` | 改用 `openid`;查不到补建;兼容旧 `_openid` |
 | `cloudfunctions/updateProfile/index.js` | 改用 `openid`;档案不存在时补建 |
 | `cloudfunctions/addFocus/index.js` | 改用 `openid`;累加改原子自增;标注"已无人调用" |
-| `cloudfunctions/recordSession/index.js` | 防重复改先查后插;显式写 `openid`;累加改原子自增 |
-| `app.js` | 新增 `waitOpenid()`,供页面做数据归属过滤 |
-| `utils/util.js` | 新增 `dayKeyFor()`,统一"午夜模式"归属日期口径 |
-| `pages/pomodoro/pomodoro.js` | `focus_log` / `pomo_sessions` 查询补用户过滤;读写口径统一 |
-| `pages/stats/stats.js` | `focus_log` 查询补用户过滤 |
-| `pages/index/index.js` | `focus_log` 查询补用户过滤 |
-| `pages/todolist/todolist.js` | `focus_log` 查询补用户过滤 |
-| `pages/pomodoro/pomodoro.js`(第二轮) | **补上从未定义的 `doAlerts()`**;新增统一出口 `finishSession()`,把提示与数据上报用独立 `try/catch` 隔开;30 秒轮询定时器保存引用并在 `onUnload` 清理 |
+| `cloudfunctions/recordSession/index.js` | 第一轮:防重复改先查后插;显式写 `openid`;累加改原子自增。第二轮:`runId` 幂等键 + 确定性 `_id`;校验改用净专注时长 `focusedSeconds`(暂停不再导致丢记录) |
+| `app.js` | 新增 `waitOpenid()`(缺登录时会自己发起一次,清除数据后能恢复)与 `resetLocalState()` |
+| `utils/util.js` | 新增 `getSettings()` 与 `dayKeyFor()`,统一"午夜模式"归属日期口径 |
+| `pages/pomodoro/pomodoro.js` | 查询补用户过滤;**补上从未定义的 `doAlerts()`**;新增 `finishSession()`/`creditSegment()`/`pauseTimer()`/`abortSession()`/`resetSessionState()`,引入净专注时长与 `runId`;30 秒轮询定时器补清理;`todayKeyHint()` 改调 `util.dayKeyFor()` |
+| `pages/stats/stats.js` | 查询补用户过滤;口径改 `util.dayKeyFor()`;聚合加脏数据兜底 |
+| `pages/index/index.js` | 查询补用户过滤;口径改 `util.dayKeyFor()`;**补上从未定义的 `getSettings()`**(此前 `onLoad` 必崩);聚合加脏数据兜底 |
+| `pages/todolist/todolist.js` | 查询补用户过滤;口径改 `util.dayKeyFor()`;聚合加脏数据兜底;`todolist.json` 开启下拉刷新 |
+| `pages/profile/profile.js` / `.wxml` | "退出登录"改为**"清除本机数据"**(不再调用不存在的 `logout` 云函数,清完重新登录);补上"明暗主题"缺失的 `bindtap` |
 | `CODE-REVIEW-2026-09-21.md` | 本报告 |
 
 Git 提交:
 - `b5f41ad` chore: 首次快照(修改前存档)
 - `07c3f1d` fix(cloud): 云函数改用显式 openid 字段
-- (后续)fix(pomodoro): 补上 doAlerts 并修复完成流程/定时器泄漏
+- `89460cc` fix(pomodoro): 补上从未定义的 doAlerts(),修复番茄钟完成流程
+- (本轮)`fix: 修复暂停丢记录、清除数据、写入幂等与四页口径不一致`
