@@ -1,5 +1,8 @@
 // pages/stats/stats.js — 专注统计中心(累计/今日/日周月分布/年度)
 const util = require('../../utils/util.js');
+const themeUtil = require('../../utils/theme.js');
+const statsApi = require('../../utils/focus-stats.js');
+const DAY_MS = 86400000;
 
 Page({
   data: {
@@ -46,11 +49,11 @@ Page({
     const app = getApp();
     if (app.setNavBar) app.setNavBar();
     this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '',
-      colorClass: app.themeColor ? ({"green":"","blue":"theme-blue","orange":"theme-orange","purple":"theme-purple","pink":"theme-pink"})[app.themeColor] || '' : '' });
+      colorClass: themeUtil.colorClass(app.themeColor) });
     this.loadAll();
   },
 
-  async loadAll() {
+  async loadAll(force) {
     try {
       const app = getApp();
       const openid = await app.waitOpenid();
@@ -61,14 +64,15 @@ Page({
       // 2026-09-21 改造:原来在客户端 .limit(1000).get() 拉全量再自己按天累加,
       // 数据超 1000 条会静默截断、统计偏低。现在交给云函数在服务端分页聚合,
       // 只回传"每天一条"的小结果。
-      const res = await wx.cloud.callFunction({ name: 'getFocusStats' });
-      const r = res.result || {};
+      // 2026-09-21d:再包一层缓存,四个页面共用一次请求(见 utils/focus-stats.js)。
+      const r = await statsApi.getFocusStats(!!force);
       if (r.code !== 0) {
         console.error('getFocusStats failed', r.error);
         wx.showToast({ title: r.error || '统计加载失败', icon: 'none' });
         return;
       }
       const byDay = r.byDay || {};
+      const abandons = r.abandons || {};
       const totals = r.totals || { minutes: 0, sessions: 0, days: 0 };
       if (r.truncated) {
         console.warn('getFocusStats: 数据量超过分页上限,统计为部分结果');
@@ -77,7 +81,7 @@ Page({
       const today = util.dayKeyFor(util.getSettings());
       const activeDays = totals.days || 0;
       const totalMinutes = Number(totals.minutes) || 0;
-      const totalSessions = Number(totals.sessions) || 0;
+      const totalSessions = Number(totals.focusSessions || totals.sessions) || 0;
 
       // 累计:日均 = 总分钟 / 活跃天数(或历史总天数,取活跃更直观)
       const avgMins = activeDays > 0 ? Math.round(totalMinutes / activeDays) : 0;
@@ -88,11 +92,16 @@ Page({
         avgMins,
         todayCount: byDay[today] ? byDay[today].sessions : 0,
         todayMins: byDay[today] ? byDay[today].minutes : 0,
-        todayAbandon: 0 // 放弃次数:尚未记录,显示 0(后续加放弃记录)
+        // A6:放弃次数改为真实数据(切模式/重置/离开页面时上报的 abandoned 记录)
+        todayAbandon: Number(abandons[today]) || 0
       });
 
       // 历次数据缓存,供分布/年度用
       this._byDay = byDay;
+      this._abandons = abandons;
+      // C2:算一个"最早有数据的那天",给"上一页"设下界
+      const days = Object.keys(byDay).sort();
+      this._earliestDay = days.length ? days[0] : util.todayKey();
       this.refreshRange();
       this.loadYear();
     } catch (err) {
@@ -124,11 +133,36 @@ Page({
   },
 
   onPrev() {
+    // C2:不能无限往前翻 —— 翻到"最早有数据的那天"所在窗口之前就没有意义了
+    if (!this.canPrevFurther()) return;
     if (this.data.rangeMode === 'day') this.distOffset -= 1;
     else if (this.data.rangeMode === 'week') this.distOffset -= 1;
     else if (this.data.rangeMode === 'month') this.distOffset -= 1;
     else if (this.data.rangeMode === 'custom') this.distOffset -= 7;
     this.refreshRange();
+  },
+
+  // 最早有数据的那天(没有数据时就是今天)
+  earliestDate() {
+    const key = this._earliestDay || util.todayKey();
+    const d = new Date(key + 'T00:00:00');
+    return isNaN(d.getTime()) ? new Date() : d;
+  },
+
+  // offset 的可见下界:窗口起点不能早于最早数据日
+  minOffset() {
+    const mode = this.data.rangeMode;
+    const earliest = this.earliestDate();
+    const now = new Date();
+    const days = Math.max(0, Math.round((now - earliest) / DAY_MS));
+    if (mode === 'day') return -Math.floor(days / 7);
+    if (mode === 'week') return -Math.max(0, Math.floor(days / 7));
+    if (mode === 'month') return -Math.max(0, Math.min(11, Math.round(days / 30)));
+    return -Math.max(0, Math.ceil(days / 7)); // custom:窗口宽度固定 31 天以内,按 7 天平移
+  },
+
+  canPrevFurther() {
+    return this.distOffset > this.minOffset();
   },
 
   onNext() {
