@@ -67,12 +67,20 @@ Page({
     if (!targetDate) { wx.showToast({ title: '请选择截止日期', icon: 'none' }); return; }
     try {
       const db = wx.cloud.database();
-      // 客户端写入会自动带 _openid;这里额外显式写一份 openid,
-      // 是为了将来把读写挪到云函数时不用改数据形态(B6)。
-      const openid = (await getApp().waitOpenid()) || '';
-      await db.collection('countdowns').add({
-        data: { openid, title, targetDate, createdAt: new Date().toISOString() }
-      });
+      const col = db.collection('countdowns');
+      const doc = { title, targetDate, createdAt: new Date().toISOString() };
+      try {
+        // 客户端写入会自动带 _openid;这里额外显式写一份 openid,
+        // 是为了将来把读写挪到云函数时不用改数据形态(B6)。
+        doc.openid = (await getApp().waitOpenid()) || '';
+        await col.add({ data: doc });
+      } catch (e) {
+        // 万一运行时不接受客户端写 _openid/openid 之外的保留字段而报错,
+        // 退回最小写入,保证"加不上"这种硬失败不会发生。
+        console.warn('countdown add retry without openid', e);
+        delete doc.openid;
+        await col.add({ data: doc });
+      }
       this.setData({ showModal: false });
       this.load();
       wx.showToast({ title: '已添加', icon: 'success' });
