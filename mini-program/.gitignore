@@ -1,0 +1,16 @@
+# 微信开发者工具的本地私有配置（机器相关，含本机调试开关）
+project.private.config.json
+
+# 依赖与构建产物
+node_modules/
+miniprogram_npm/
+cloudfunctions/*/node_modules/
+
+# 编辑器与系统
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# 一次性自检脚本（临时文件）
+chk*.ps1
