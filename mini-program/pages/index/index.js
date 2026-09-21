@@ -21,6 +21,7 @@ Page({
     showNameModal: false,
     nameInput: '',
     dayPct: 0,
+    dayNew: true,
     noDoneLine: false,
     themeClass: '',
     colorClass: ''
@@ -79,10 +80,20 @@ Page({
   tick() {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const dayPct = Math.min(100, Math.max(0, Math.round(((now - start) / 86400000) * 100)));
+    // 2026-09-21 修 "今日进度" 三个问题:
+    //  ① 原来 Math.round 会把一天开头几分钟压成 0%(24 分钟内 <0.5%),
+    //     进度条 track 有、fill 却是 0 宽 —— 看起来就是"进度条坏了/没显示";
+    //     现在起步即 1%,配合 "新的一天" 文案,一天开始是可见的。
+    //  ② 分母不再写死 86400000:用 明天0点 - 今天0点,夏令时切换那天
+    //     (23/25 小时) 也不会算偏。
+    //  ③ 顺带给"进度不足 1%"(凌晨刚过零点)一个 dayNew 标记,页面显示"新的一天"。
+    const end = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+    const span = end - start;
+    const dayPct = Math.min(100, Math.max(1, Math.ceil(((now - start) / span) * 100)));
     this.setData({
       clock: util.fmtClock(now),
       dayPct,
+      dayNew: dayPct <= 1,
       dateLine: now.getFullYear() + ' 年 ' + (now.getMonth() + 1) + ' 月 ' + now.getDate() + ' 日 星期' + util.weekdays[now.getDay()],
       greeting: util.greeting() + ',今天也从容一点'
     });

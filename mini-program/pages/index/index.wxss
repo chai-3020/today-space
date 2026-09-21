@@ -40,6 +40,9 @@
 .day-progress { margin-top: 24rpx; }
 .dp-label { display: flex; justify-content: space-between; font-size: 24rpx; color: var(--muted); margin-bottom: 8rpx; }
 .dp-track { height: 12rpx; background: var(--line); border-radius: 999rpx; overflow: hidden; }
-.dp-fill { height: 100%; background: var(--accent); border-radius: 999rpx; transition: width 1s linear; }
+.dp-fill { height: 100%; min-width: 6rpx; background: var(--accent); border-radius: 999rpx; transition: width 1s linear; }
+/* 0.2 秒转场:每秒一次 setData,转场必须远短于 1 秒,否则动画被下一次更新不断打断,视觉上永远"差一截" */
+.dp-fill.smooth { transition: width 0.2s linear; }
+.dp-new { margin-left: 8rpx; font-size: 20rpx; color: var(--accent); background: var(--accent-soft); border-radius: 999rpx; padding: 2rpx 10rpx; }
 .clock-row { display: flex; align-items: center; gap: 16rpx; }
 .theme-btn { font-size: 24rpx; color: var(--muted); border: 1px solid var(--line); border-radius: 999rpx; padding: 6rpx 16rpx; background: var(--panel); }

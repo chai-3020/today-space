@@ -19,11 +19,11 @@
     </view>
     <view class="day-progress">
       <view class="dp-label">
-        <text>今日进度</text>
+        <view><text>今日进度</text><text wx:if="{{dayNew}}" class="dp-new">新的一天</text></view>
         <text>{{dayPct}}%</text>
       </view>
       <view class="dp-track">
-        <view class="dp-fill" style="width: {{dayPct}}%;"></view>
+        <view class="dp-fill smooth" style="width: {{dayPct}}%;"></view>
       </view>
     </view>
   </view>
