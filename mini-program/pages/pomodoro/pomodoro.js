@@ -210,23 +210,18 @@ Page({
   // ---- 数据加载 ----
   async loadToday() {
     try {
-      const app = getApp();
-      const openid = await app.waitOpenid();
-      if (!openid) {
-        console.warn('loadToday skipped: openid 未就绪');
+      // 2026-09-21:改走云函数服务端聚合(原来在这里拉 focus_log 全量再自己累加)
+      const res = await wx.cloud.callFunction({ name: 'getFocusStats' });
+      const r = res.result || {};
+      if (r.code !== 0) {
+        console.error('getFocusStats failed', r.error);
         return;
       }
-      const db = wx.cloud.database();
-      const res = await db.collection('focus_log').where({ openid }).limit(1000).get();
-      const today = this.todayKeyHint();
-      let minutes = 0, sessions = 0;
-      for (const r of res.data) {
-        if (r.day === today) {
-          minutes += r.minutes;
-          sessions += r.sessions;
-        }
-      }
-      this.setData({ todayMinutes: minutes, todaySessions: sessions });
+      const row = (r.byDay || {})[this.todayKeyHint()];
+      this.setData({
+        todayMinutes: row ? row.minutes : 0,
+        todaySessions: row ? row.sessions : 0
+      });
     } catch (err) {
       console.error('loadToday failed', err);
     }
@@ -241,7 +236,7 @@ Page({
         return;
       }
       const db = wx.cloud.database();
-      const today = this.todayKeyHint();
+      const today = util.dateKey(new Date(Date.now() + this.dayOffset() * 86400000));
       const res = await db.collection('pomo_sessions')
         .where({ openid, day: today })
         .orderBy('startedAt', 'desc')
@@ -390,6 +385,12 @@ Page({
     return util.dayKeyFor(this.getSettings());
   },
 
+  // 相对自然日的天偏移(午夜模式归前一天时为 -1)。列表查询与上报都用它,
+  // 保证"读"和"写"落在同一天。
+  dayOffset() {
+    return this.todayKeyHint() === util.todayKey() ? 0 : -1;
+  },
+
   async onSessionComplete() {
     const mode = this.data.mode;
     const nominalMinutes = this.modes[mode].minutes;
@@ -412,7 +413,7 @@ Page({
           // 日期由服务端按下面两个参数推导,客户端不再直接传 day
           //(防止把 day 填成任意历史日期刷数据)
           tzOffsetMinutes: new Date().getTimezoneOffset(),
-          dayOffset: this.todayKeyHint() === util.todayKey() ? 0 : -1 // 午夜模式:归前一天
+          dayOffset: this.dayOffset() // 午夜模式:归前一天
         }
       });
       const r = res.result || {};
