@@ -1,11 +1,18 @@
 // 云函数 recordSession — 记录一次完整的番茄会话(专注/短休/长休)
 // 写入 pomo_sessions 明细;专注会话同时累加到 focus_log(保持统计一致)
 //
-// 2026-09-21 修复:
-//   1) 原实现在 add() 之后才查重,且用 _openid 匹配 —— 云函数写入的文档
-//      不带 _openid,所以防重复分支永远不会触发。改为「先查重、后插入」,
-//      并显式写入 openid 字段。
-//   2) focus_log 的累加由「读-改-写」改为原子自增(_.inc),避免并发丢更新。
+// 变更记录:
+//   2026-09-21a 防重复改为「先查后插」,显式写 openid,focus_log 改原子自增。
+//   2026-09-21b (本次)
+//     - 幂等键新增 runId:客户端在**会话开始时**生成一次,重试沿用同一个值,
+//       并以它作为 pomo_sessions 的文档 _id —— 重复提交会被主键冲突挡掉,
+//       不再依赖"毫秒级时间戳"这种脆弱去重。
+//     - 校验改用「净专注时长」focusedSeconds:原先用 endedAt-startedAt 反推
+//       总时长,导致"暂停一会儿再继续跑完"这种正常操作被判时长不符而丢弃
+//       整次记录。现在改为:
+//         · focusedSeconds 必须与上报的 minutes 吻合(±3 分钟);
+//         · 真实时间跨度不得小于净专注时长(物理上不可能,防伪造);
+//         · 暂停时长不再参与判定。
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();
@@ -19,57 +26,76 @@ exports.main = async (event) => {
 
   const type = String(event.type || 'focus'); // focus | short | long
   const minutes = Number(event.minutes) || 0;
-  const startedAt = Number(event.startedAt) || 0; // 开始时间戳(ms)
-  const endedAt = Number(event.endedAt) || 0;     // 结束时间戳(ms)
+  const startedAt = Number(event.startedAt) || 0;   // 会话真实开始时间戳(ms,含暂停)
+  const endedAt = Number(event.endedAt) || 0;       // 会话结束时间戳(ms)
+  const focusedMs = Number(event.focusedSeconds) * 1000 || 0; // 净专注时长(ms)
 
   // ---- 校验 ----
   if (!SESSION_TYPES.includes(type)) return { code: 1, error: '无效的会话类型' };
   if (minutes <= 0 || minutes > 180) return { code: 1, error: '时长无效(1-180 分钟)' };
   if (!startedAt || !endedAt || endedAt <= startedAt) return { code: 1, error: '时间戳无效' };
-  // 时长与时间戳偏差容差(防止前端乱传):±3 分钟
-  const durMin = (endedAt - startedAt) / 60000;
-  if (Math.abs(durMin - minutes) > 3) return { code: 1, error: '时长与时间不一致' };
+
+  const wallMs = endedAt - startedAt;
+  // ① 净专注时长必须与上报的分钟数吻合(容差 ±3 分钟)
+  if (!focusedMs || Math.abs(focusedMs / 60000 - minutes) > 3) {
+    return { code: 1, error: '专注时长与上报不一致' };
+  }
+  // ② 净专注时长不可能超过真实时间跨度(防伪造);1 分钟容差吸收合并计时误差
+  if (focusedMs > wallMs + 60000) {
+    return { code: 1, error: '专注时长超过实际耗时' };
+  }
 
   // ---- 日期(前端按用户本地时区算好再传,避免服务器时区偏差)----
   const day = String(event.day || '');
   if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return { code: 1, error: '日期格式不对' };
 
+  // ---- 幂等键 ----
+  // 客户端在会话开始时生成,重试时沿用同一个值;缺省时退化为用户名+结束时刻。
+  const rawRunId = String(event.runId || '').trim();
+  const runId = /^[A-Za-z0-9_-]{6,64}$/.test(rawRunId)
+    ? rawRunId
+    : `${OPENID.slice(-8)}-${endedAt}`;
+
   const endedIso = new Date(endedAt).toISOString();
   const sessions = db.collection('pomo_sessions');
+  const docId = `s_${OPENID.slice(-12)}_${runId}`;
 
-  // ---- 防重复:先查,再插 ----
-  // 同一次会话(同一用户 + 同一结束时刻)只记一次;重复提交直接返回,不写库。
-  const dup = await sessions.where({ openid: OPENID, endedAt: endedIso }).count();
-  if (dup.total > 0) return { code: 0, duplicated: true };
-
-  // ---- 写入会话明细(显式带 openid:云函数写入不会自动注入 _openid)----
-  const res = await sessions.add({
-    data: {
-      openid: OPENID,
-      type,
-      minutes,
-      day,
-      startedAt: new Date(startedAt).toISOString(),
-      endedAt: endedIso,
-      createdAt: new Date().toISOString()
-    }
-  });
+  // ---- 写明细:用确定性 _id 挡重复(比 count() 查重可靠,无并发窗口)----
+  try {
+    await sessions.add({
+      data: {
+        _id: docId,
+        openid: OPENID,
+        runId,
+        type,
+        minutes,
+        focusedSeconds: Math.round(focusedMs / 1000),
+        day,
+        startedAt: new Date(startedAt).toISOString(),
+        endedAt: endedIso,
+        createdAt: new Date().toISOString()
+      }
+    });
+  } catch (err) {
+    // _id 已存在 = 这次会话已经记过了(客户端重试 / 重复提交)
+    console.log('recordSession: duplicate runId', runId);
+    return { code: 0, duplicated: true, id: docId };
+  }
 
   // ---- 专注会话:累加到 focus_log ----
   if (type === 'focus') {
-    // 原子自增:并发时也不会丢更新(原实现是读出来改完再写,会丢)
-    const bumped = await db.collection('focus_log')
-      .where({ openid: OPENID, day })
+    const logs = db.collection('focus_log');
+    // 原子自增:并发时不会丢更新
+    const bumped = await logs.where({ openid: OPENID, day })
       .update({ data: { minutes: _.inc(minutes), sessions: _.inc(1) } });
-
-    // 该用户当天还没有记录 -> 建一条(users 集合里由 login 维护,这里不依赖它)
-    const updated = bumped.stats && (bumped.stats.updated || bumped.stats.updatedCount);
-    if (!updated) {
-      await db.collection('focus_log').add({
+    const count = bumped.stats && (bumped.stats.updated || bumped.stats.updatedCount || 0);
+    if (!count) {
+      // 当天还没有记录 -> 建一条(极小概率的并发建重,统计端按行累加不会算错)
+      await logs.add({
         data: { openid: OPENID, day, minutes, sessions: 1, createdAt: new Date().toISOString() }
       });
     }
   }
 
-  return { code: 0, id: res._id };
+  return { code: 0, id: docId };
 };
