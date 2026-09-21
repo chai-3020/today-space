@@ -23,7 +23,12 @@ exports.main = async (event) => {
   // 档案不存在就补建(旧数据是客户端/其它路径写入时可能没有 openid 字段)
   if (!count) {
     await users.add({
-      data: { openid: OPENID, name, createdAt: new Date().toISOString() }
+      data: {
+        _openid: OPENID,   // B7:云函数写入不会自动注入,显式补上,便于把权限收紧
+        openid: OPENID,
+        name,
+        createdAt: new Date().toISOString()
+      }
     });
   }
 
