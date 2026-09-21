@@ -2,7 +2,30 @@
 
 > 版本：v1（2026-09-21）
 > 审计范围：`D:\codex  use\mini-program` 全部页面（index / todolist / stats / profile / pomodoro / notes / countdown）、`utils/util.js`、`app.js`、6 个云函数（login / recordSession / getFocusStats / addFocus / clearDoneTodos / updateProfile）、`app.wxss` 主题变量。
-> 说明：本文档**只提方案不改代码**。每条都给出「问题 → 证据（文件:行）→ 具体改法 → 收益」。
+> 说明：本文档给出「问题 → 证据（文件:行）→ 具体改法 → 收益」。
+
+## 实施状态（2026-09-21 晚更新）
+
+**A 组（高危）+ B 组（中危）已全部改完并上线。** 上传版本 `1.0.1`，云函数已重新部署 4 个。
+
+| 编号 | 状态 | 落点 |
+|---|---|---|
+| A1 切后台计时停摆 | ✅ 已修 | `pomodoro.js`：`startTick/stopTick/syncTimer`，`onShow` 补建定时器 |
+| A2 上报校验拒收 | ✅ 已修 | `recordSession/index.js`：净时长不一致时"以服务端为准降级入库"+`adjusted` 标记 |
+| A3 后台结束净时长算错 | ✅ 已修 | `pomodoro.js`：`creditSegment(atMs)` 按 `endAt` 结算；新增 `wallSeconds` |
+| A4 深色圆环轨道 | ✅ 已修 | `pomodoro.wxml` + `utils/theme.js` 的 `ringTrack` |
+| A5 图表颜色写死 | ✅ 已修 | `stats.js`：新增 `paintBars()`，颜色走 `themeUtil.palette()` |
+| A6 静默丢弃会话 | ✅ 已修 | `pomodoro.js`：二次确认 + `reportAbandon()`；`recordSession` 支持 `type='abandoned'` |
+| B1 读写日期口径错位 | ✅ 已修 | `pomodoro.js loadSessions()`：改按 `startedAt` 时间戳区间查询 |
+| B2 wx:key 会撞 | ✅ 已修 | `pomodoro.wxml`：`timelineBlocks`/`sessionList` 改用 `_id` |
+| B3 每次全量扫 + 4 次调用 | 🟡 部分完成 | 已做：游标分页替换 `skip`、`utils/focus-stats.js` 缓存层（4 页共用一次请求）、写后失效。<br>**待手工**：控制台建组合索引 `focus_log(openid↑,day↑)`；`stats_daily` 汇总集合 + 定时触发器（P2-12） |
+| B4 addFocus 死代码 | ✅ 本地已删 | 目录已移除；**待手工**：云开发控制台删掉云端那个函数（CLI 没有 delete 命令） |
+| B5 restMin 死设置 | ✅ 已修 | `profile.js/wxml` 新增弹窗；`pomodoro.loadCustomModes()` 采用它作为短休默认值 |
+| B6 权限兜底风险 | ✅ 已加固 | 三处权限依赖都写了显式注释；`countdown.onDelete` 补上 `showModal` 的 Promise 化（原来 `await` 回调式 API，删除确认永远拿到 undefined）；`onSave` 显式写 `openid` 并带最小写入兜底 |
+| B7 focus_log 无 _openid | ✅ 已修 | `recordSession`/`updateProfile` 写入时显式补 `_openid` |
+| 连带发现：`clearDoneTodos` 一条也删不掉 | ✅ 已修 | 原来只按 `openid` 查，而待办是客户端直写、只有 `_openid` → 改成两条路径都查 |
+
+**验证方式**：`node --check` 全量语法通过；`D:\ds harness\.scratch-dsh\verify-fixes.mjs`（mock 掉 `wx`/`getApp` 真跑主题、缓存、净时长、分页下界、查询窗口、放弃阈值）**24 项全过**。剩余需在模拟器里人工验的 4 条见文末。
 
 ---
 
@@ -239,3 +262,20 @@
 **先 P0 五条（纯修复，不动设计，当天可上线）→ 再 P2 的 12/13/14（架构与成本，越早做越省事）→ 然后 P1 的留存三件套（热力图 + 连续天数 + 分享卡片）→ 最后才是自习室。**
 
 理由：P0 修的是"数据会丢、计时会停"这类致命体验；P2 决定成本上限，等 DAU 起来再改要迁移数据；P1 是留存曲线；自习室是放大器，但它的价值建立在"你自己先把专注记录做准"之上。
+
+---
+
+## 第五部分：本轮改完后的手工验证清单（模拟器里点一遍）
+
+代码层面能自测的都已自测（语法 + mock 逻辑 24 项），下面 5 条必须在真机/模拟器上过一遍：
+
+1. **后台续跑（A1）**：开始一个 1 分钟的专注 → 立刻切到微信聊天/其它 tab 等 30 秒 → 切回来。期望：数字继续走（不是冻住），到点正常弹"专注完成"。
+2. **后台跨过结束点（A3）**：开始 1 分钟专注 → 切后台待满 90 秒再回来。期望：提示完成，记录 +1 分钟；统计里的分钟数不含后台那 30 秒。
+3. **放弃记录（A6）**：专注 2 分钟后点"重置"。期望：弹二次确认；确认后统计页"今日专注 → 放弃次数"变成 1（不再是 0）。
+4. **深色模式配色（A4/A5）**：切深色 → 番茄钟圆环的底圈看得见；统计页柱子是主题色而不是发灰；再换主题色（紫/粉），圆环和柱子跟着变。
+5. **清除已完成（连带修复）**：勾几条待办 → 点"清除已完成"。期望：提示"已清除 N 条"且列表真的空（之前会提示 0 条）。
+
+### 还需要在云开发控制台手工做的两件事
+
+- **删掉云端的 `addFocus` 函数**（本地目录已删；开发者工具 CLI 没有 delete 命令）：云开发控制台 → 云函数 → `addFocus` → 删除。
+- **建索引**（B3 收尾，直接影响统计速度与资源点消耗）：数据库 → `focus_log` → 索引管理 → 新增组合索引 `openid`(升序) + `day`(升序)；`pomo_sessions` 建 `openid`(升序) + `startedAt`(降序)。
