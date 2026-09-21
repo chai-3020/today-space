@@ -188,11 +188,11 @@ Page({
   // ---- 计算当前范围的分布 ----
   refreshRange() {
     const mode = this.data.rangeMode;
-    const byDay = this._byDay || {};
     const res = this.computeRange(mode, this.distOffset);
     this.setData({
       rangeTitle: res.title,
-      canPrev: res.canPrev,
+      // canPrev 不再只看"能不能往未来翻",还要求没翻到最早数据之前(C2)
+      canPrev: res.canPrev && this.canPrevFurther(),
       canNext: res.canNext,
       distLabels: res.labels,
       distValues: res.values,
@@ -319,14 +319,34 @@ Page({
     wx.nextTick(() => this.drawYear());
   },
 
-  // ---- 绘制:分布图(柱状) ----
+  // ---- 绘制:统一入口(A5:颜色必须跟随主题,canvas 不继承 WXSS 变量)----
   drawDistribution() {
+    this.paintBars('#dist-chart', {
+      values: this.data.distValues,
+      labels: this.data.distLabels,
+      labelEvery: true
+    });
+  },
+
+  drawYear() {
+    this.paintBars('#year-chart', {
+      values: this.data.monthValues,
+      labels: this.data.monthLabels.map((_, i) => (i + 1) + '月'),
+      labelEvery: true,
+      chartPad: 26
+    });
+  },
+
+  paintBars(selector, opts) {
+    const values = opts.values || [];
+    const labels = opts.labels || [];
+    const chartPad = opts.chartPad || 30;
     const query = wx.createSelectorQuery();
-    query.select('#dist-chart').fields({ node: true, size: true }).exec((res) => {
+    query.select(selector).fields({ node: true, size: true }).exec((res) => {
       if (!res || !res[0] || !res[0].node) return;
       const canvas = res[0].node;
       const ctx = canvas.getContext('2d');
-      const dpr = wx.getSystemInfoSync().pixelRatio || 2;
+      const dpr = (wx.getSystemInfoSync().pixelRatio) || 2;
       canvas.width = res[0].width * dpr;
       canvas.height = res[0].height * dpr;
       ctx.scale(dpr, dpr);
@@ -334,77 +354,40 @@ Page({
       const h = res[0].height;
       ctx.clearRect(0, 0, w, h);
 
-      const values = this.data.distValues;
-      const labels = this.data.distLabels;
-      const max = Math.max(30, ...values);
+      // A5/C8:取当前主题调色板 —— 之前这里是写死的 #0d9f6d / #dfe5e8 / #5c6b74,
+      // 深色模式下柱子发灰、切主题色图表永远是绿的。
+      const p = themeUtil.palette(getApp());
+
+      const max = Math.max(30, ...values, 1);
       const pad = 14;
-      const chartH = h - 30;
-      const n = values.length;
-      const gap = Math.max(2, Math.min(8, w / n / 5));
+      const chartH = h - chartPad;
+      const n = values.length || 1;
+      const gap = n > 12 ? 6 : Math.max(2, Math.min(8, w / n / 5));
       const bw = Math.max(4, (w - pad * 2 - gap * (n - 1)) / n);
+      const labelStep = Math.max(1, Math.ceil(n / 12));
 
       values.forEach((v, i) => {
         const x = pad + i * (bw + gap);
         const bh = v === 0 ? 3 : Math.max(5, (v / max) * (chartH - 20));
         const y = chartH - bh;
-        ctx.fillStyle = v > 0 ? '#0d9f6d' : '#dfe5e8';
+        ctx.fillStyle = v > 0 ? p.accent : p.chartEmpty;
         ctx.beginPath();
         const r = Math.min(3, bw / 2, bh / 2);
         ctx.roundRect ? ctx.roundRect(x, y, bw, bh, r) : ctx.rect(x, y, bw, bh);
         ctx.fill();
-        // 数值
-        if (v > 0) {
-          ctx.fillStyle = '#5c6b74';
-          ctx.font = '9px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(String(v), x + bw / 2, y - 3);
-        }
-        // 标签(间隔显示,避免挤)
-        if (n <= 12 || i % Math.ceil(n / 12) === 0) {
-          ctx.fillStyle = '#5c6b74';
-          ctx.font = '9px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText(String(labels[i]), x + bw / 2, h - 7);
-        }
-      });
-    });
-  },
 
-  // ---- 绘制:年度(折线/柱状) ----
-  drawYear() {
-    const query = wx.createSelectorQuery();
-    query.select('#year-chart').fields({ node: true, size: true }).exec((res) => {
-      if (!res || !res[0] || !res[0].node) return;
-      const canvas = res[0].node;
-      const ctx = canvas.getContext('2d');
-      const dpr = wx.getSystemInfoSync().pixelRatio || 2;
-      canvas.width = res[0].width * dpr;
-      canvas.height = res[0].height * dpr;
-      ctx.scale(dpr, dpr);
-      const w = res[0].width;
-      const h = res[0].height;
-      ctx.clearRect(0, 0, w, h);
-
-      const vals = this.data.monthValues;
-      const max = Math.max(30, ...vals);
-      const pad = 14;
-      const chartH = h - 26;
-      const n = 12;
-      const gap = 6;
-      const bw = Math.max(6, (w - pad * 2 - gap * (n - 1)) / n);
-
-      vals.forEach((v, i) => {
-        const x = pad + i * (bw + gap);
-        const bh = v === 0 ? 3 : Math.max(5, (v / max) * (chartH - 18));
-        const y = chartH - bh;
-        ctx.fillStyle = v > 0 ? '#0d9f6d' : '#dfe5e8';
-        ctx.beginPath();
-        ctx.roundRect ? ctx.roundRect(x, y, bw, bh, 3) : ctx.rect(x, y, bw, bh);
-        ctx.fill();
-        ctx.fillStyle = '#5c6b74';
         ctx.font = '9px sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText((i + 1) + '月', x + bw / 2, h - 6);
+        // 数值(仅非零,避免 31 根柱子上全是 0)
+        if (v > 0) {
+          ctx.fillStyle = p.chartLabel;
+          ctx.fillText(String(v), x + bw / 2, y - 3);
+        }
+        // 标签:柱数多时按 step 抽稀,避免挤成一团(C4)
+        if (i % labelStep === 0 || i === n - 1) {
+          ctx.fillStyle = p.chartLabel;
+          ctx.fillText(String(labels[i] === undefined ? '' : labels[i]), x + bw / 2, h - 7);
+        }
       });
     });
   },
