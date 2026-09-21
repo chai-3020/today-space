@@ -45,10 +45,41 @@ Page({
   total: DEFAULT_MODES.focus.minutes * 60,
   remaining: DEFAULT_MODES.focus.minutes * 60,
   intervalId: null,
+  nowLineTimerId: null,
   endAt: 0,
 
   getSettings() {
     try { return wx.getStorageSync('ts-settings') || {}; } catch (e) { return {}; }
+  },
+
+  // 会话结束提示(震动)。
+  // 2026-09-21:此前这个方法**从未定义**,而计时归零时会被调用两次路径命中,
+  // 抛出的 TypeError 直接把后面的 onSessionComplete() 顶掉 —— 番茄钟跑完
+  // 永远不落库。所有可用性有限的 API 都必须包 try/catch。
+  doAlerts() {
+    const s = this.getSettings();
+    if (s.soundOn === false) return; // 默认开启;设置页的开关存的就是这个字段
+    try {
+      wx.vibrateShort({ type: 'heavy' });
+    } catch (e) {
+      console.warn('doAlerts: vibrateShort unavailable', e);
+    }
+  },
+
+  // 计时归零的统一出口:先停机,再提示,最后上报。
+  // 提示失败不能影响上报,所以两步各自独立 try/catch。
+  finishSession() {
+    this.stopTimer();
+    try {
+      this.doAlerts();
+    } catch (e) {
+      console.warn('finishSession: alert failed', e);
+    }
+    try {
+      this.onSessionComplete();
+    } catch (e) {
+      console.error('finishSession: record failed', e);
+    }
   },
 
   motto: '',
@@ -65,12 +96,18 @@ Page({
     this.updatePomo();
     this.loadToday();
     this.loadSessions();
-    setInterval(() => this.refreshNowLine(), 30000);
+    // 时间线"当前时刻"参考线:30 秒刷新一次。引用必须留住,
+    // 否则页面销毁后定时器仍在跑(对已销毁页面 setData)。
+    this.nowLineTimerId = setInterval(() => this.refreshNowLine(), 30000);
     this.refreshNowLine();
   },
 
   onUnload() {
     this.stopTimer();
+    if (this.nowLineTimerId) {
+      clearInterval(this.nowLineTimerId);
+      this.nowLineTimerId = null;
+    }
   },
 
   onHide() {
@@ -91,9 +128,7 @@ Page({
       this.remaining = Math.max(0, Math.round((this.endAt - Date.now()) / 1000));
       if (this.remaining <= 0) {
         this.remaining = 0;
-        this.stopTimer();
-        this.doAlerts();
-        this.onSessionComplete();
+        this.finishSession();
       }
       this.updatePomo();
     }
@@ -274,9 +309,7 @@ Page({
         this.remaining = Math.max(0, Math.round((this.endAt - Date.now()) / 1000));
         if (this.remaining <= 0) {
           this.remaining = 0;
-          this.stopTimer();
-          this.doAlerts();
-          this.onSessionComplete();
+          this.finishSession();
         }
         this.updatePomo();
       }, 1000);
