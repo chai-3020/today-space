@@ -114,6 +114,8 @@ Page({
 
   onUnload() {
     this.stopTimer();
+    // 离开页面即放弃未完成的会话(不落库),避免残留的计时/幂等键影响下一次
+    this.abortSession();
     if (this.nowLineTimerId) {
       clearInterval(this.nowLineTimerId);
       this.nowLineTimerId = null;
