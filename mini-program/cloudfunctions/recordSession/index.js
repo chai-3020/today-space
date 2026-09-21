@@ -16,7 +16,8 @@
 //   2026-09-21c (本次)
 //     - 日期改由服务端从 endedAt + 客户端时区偏移推导:原先直接信任客户端
 //       传来的 day(只校验格式),可以填成任意历史日期刷数据。现在客户端
-//       只传 tzOffsetMinutes,day 由服务端算(旧客户端若仍传 day 则做核对)。
+//       只传 tzOffsetMinutes 与 dayOffset(0 / -1,给"午夜模式"用),
+//       具体日期由服务端算(旧客户端若仍传 day 则做一致性核对)。
 const cloud = require('wx-server-sdk');
 cloud.init({ env: cloud.DYNAMIC_CURRENT_ENV });
 const db = cloud.database();

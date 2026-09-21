@@ -58,29 +58,26 @@ Page({
         console.warn('stats loadAll skipped: openid 未就绪');
         return;
       }
-      const db = wx.cloud.database();
-      const res = await db.collection('focus_log').where({ openid }).limit(1000).get();
-      const rows = res.data || [];
-      // 归一化:day -> {minutes, sessions}
-      const byDay = {};
-      let totalSessions = 0;
-      let totalMinutes = 0;
-      let activeDays = 0;
+      // 2026-09-21 改造:原来在客户端 .limit(1000).get() 拉全量再自己按天累加,
+      // 数据超 1000 条会静默截断、统计偏低。现在交给云函数在服务端分页聚合,
+      // 只回传"每天一条"的小结果。
+      const res = await wx.cloud.callFunction({ name: 'getFocusStats' });
+      const r = res.result || {};
+      if (r.code !== 0) {
+        console.error('getFocusStats failed', r.error);
+        wx.showToast({ title: r.error || '统计加载失败', icon: 'none' });
+        return;
+      }
+      const byDay = r.byDay || {};
+      const totals = r.totals || { minutes: 0, sessions: 0, days: 0 };
+      if (r.truncated) {
+        console.warn('getFocusStats: 数据量超过分页上限,统计为部分结果');
+      }
       // 归属日期统一走 util.dayKeyFor(午夜模式),与番茄钟写入端、其它页面同口径
       const today = util.dayKeyFor(util.getSettings());
-
-      for (const r of rows) {
-        const day = r && r.day;
-        if (!day) continue;                                  // 跳过脏数据,避免 NaN 污染整页
-        if (!byDay[day]) byDay[day] = { minutes: 0, sessions: 0 };
-        byDay[day].minutes += Number(r.minutes) || 0;
-        byDay[day].sessions += Number(r.sessions) || 0;
-      }
-      for (const d of Object.keys(byDay)) {
-        totalMinutes += byDay[d].minutes;
-        totalSessions += byDay[d].sessions;
-        activeDays++;
-      }
+      const activeDays = totals.days || 0;
+      const totalMinutes = Number(totals.minutes) || 0;
+      const totalSessions = Number(totals.sessions) || 0;
 
       // 累计:日均 = 总分钟 / 活跃天数(或历史总天数,取活跃更直观)
       const avgMins = activeDays > 0 ? Math.round(totalMinutes / activeDays) : 0;
