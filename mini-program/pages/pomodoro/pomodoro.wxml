@@ -12,7 +12,7 @@
     </view>
 
     <view class="ring-wrap">
-      <view class="ring" style="background: conic-gradient({{ringColor}} {{ringPct}}%, #e8edf0 0%);">
+      <view class="ring" style="background: conic-gradient({{ringColor}} {{ringPct}}%, {{ringTrack}} 0%);">
         <view class="ring-inner">
           <text class="timer">{{timer}}</text>
           <text class="timer-note">{{note}}</text>
