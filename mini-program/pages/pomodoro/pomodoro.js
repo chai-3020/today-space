@@ -390,13 +390,25 @@ Page({
 
   async onSessionComplete() {
     const mode = this.data.mode;
-    const minutes = this.modes[mode].minutes;
-    const startedAt = this.startAt || (Date.now() - minutes * 60000);
+    const nominalMinutes = this.modes[mode].minutes;
     const endedAt = Date.now();
+    const startedAt = this._sessionStartMs || (endedAt - nominalMinutes * 60000);
+    // 净专注时长:暂停的那段不计入,所以它可能小于模式标称时长
+    const focusedMs = this._focusedMs > 0 ? this._focusedMs : (endedAt - startedAt);
+    const focusedSeconds = Math.max(1, Math.round(focusedMs / 1000));
+    const minutes = Math.max(1, Math.round(focusedSeconds / 60));
+    const runId = this._runId || `r${startedAt.toString(36)}`;
     try {
       const res = await wx.cloud.callFunction({
         name: 'recordSession',
-        data: { type: mode, minutes, startedAt, endedAt, day: this.todayKeyHint() }
+        data: {
+          type: mode,
+          minutes,               // 实际专注分钟(暂停不计)
+          focusedSeconds,        // 净专注秒数,服务端据此校验
+          startedAt, endedAt,    // 真实起止(含暂停),用于时间轴展示
+          runId,                 // 幂等键:重试沿用同一个值,不会重复入库
+          day: this.todayKeyHint()
+        }
       });
       const r = res.result || {};
       if (r.code === 0) {
