@@ -12,6 +12,20 @@ function todayKey() {
   return dateKey(new Date());
 }
 
+// 归属日期:午夜模式开启时,0:00-4:00 计入前一天
+function dayKeyFor(hint) {
+  if (hint && hint.midnightOn) {
+    const now = new Date();
+    const h = now.getHours();
+    if (h >= 0 && h < 4) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - 1);
+      return dateKey(d);
+    }
+  }
+  return todayKey();
+}
+
 // 相对 7 天标签
 function weekLabels() {
   const out = [];
@@ -33,4 +47,4 @@ function greeting() {
   return h < 5 ? '夜深了' : h < 12 ? '早上好' : h < 18 ? '下午好' : '晚上好';
 }
 
-module.exports = { dateKey, todayKey, weekLabels, fmtClock, greeting, weekdays };
+module.exports = { dateKey, todayKey, dayKeyFor, weekLabels, fmtClock, greeting, weekdays };
