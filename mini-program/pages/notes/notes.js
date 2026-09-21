@@ -107,7 +107,9 @@ Page({
         await col.doc(this.docId).update({ data: { content, updatedAt: now } });
       } else {
         // 首次:用确定性 _id 新建,避免"超时重试"造出第二条
-        await col.add({ data: { _id: this.docId, content, createdAt: now, updatedAt: now } });
+        // B6:文档 _id 由 openid 派生,隔离同时依赖两层 —— _id 唯一 + 集合权限
+        // "仅创建者可读写"。⚠️ 这个集合的权限不能放宽成"所有用户可读"。
+        await col.add({ data: { _id: this.docId, openid: this._openid, content, createdAt: now, updatedAt: now } });
         this._savedId = this.docId;
       }
       this._dirty = false;

@@ -86,7 +86,15 @@ Page({
     const id = e.currentTarget.dataset.id;
     const target = this.data.items.find((i) => i._id === id);
     if (!target) return;
-    const res = await wx.showModal({ title: '删除目标', content: '确定删除「' + target.title + '」吗?' });
+    // wx.showModal 是回调式 API,await 它拿不到结果 —— 必须 Promise 化后再读 confirm
+    const res = await new Promise((resolve) => {
+      wx.showModal({
+        title: '删除目标',
+        content: '确定删除「' + target.title + '」吗?',
+        success: (r) => resolve(r || {}),
+        fail: () => resolve({})
+      });
+    });
     if (!res.confirm) return;
     try {
       const db = wx.cloud.database();
