@@ -132,15 +132,22 @@ Page({
 
   onLogout() {
     wx.showModal({
-      title: '退出登录',
-      content: '退出后本机将清除登录状态,云端数据保留。',
-      confirmText: '退出',
+      title: '清除本机数据',
+      content: '将清除本机保存的设置与缓存（云端的专注记录、待办不受影响）。微信号与数据的绑定无法解除。',
+      confirmText: '清除',
       success: async (res) => {
         if (!res.confirm) return;
-        try { await wx.cloud.callFunction({ name: 'logout' }); } catch (e) {}
-        app.globalData.userInfo = null;
-        app.globalData.openid = null;
-        wx.showToast({ title: '已退出', icon: 'success' });
+        // 2026-09-21 修复:
+        //  ① 原实现调用 `wx.cloud.callFunction({ name: 'logout' })`,但项目里
+        //     根本没有这个云函数(异常被空 catch 吞掉)。
+        //  ② 原实现只把 globalData.openid 置空,而微信小程序的身份由微信侧
+        //     静默下发 —— 既没真正"登出",又会让 waitOpenid() 一直返回 null,
+        //     各页面直接跳过查询,表现为"数据全空白,只能重启小程序"。
+        // 现在改为:清本机存储 + 重新登录,页面数据立即恢复。
+        app.resetLocalState();
+        wx.showToast({ title: '已清除', icon: 'success' });
+        await app.login();
+        this.onShow();
         wx.switchTab({ url: '/pages/index/index' });
       }
     });

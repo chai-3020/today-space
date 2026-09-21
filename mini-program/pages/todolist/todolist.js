@@ -15,7 +15,7 @@ Page({
     const app = getApp();
     if (app.setNavBar) app.setNavBar();
     this.setData({ themeClass: app.theme === 'dark' ? 'theme-dark' : '',
-      colorClass: app.themeColor ? ({"green":"","blue":"theme-blue","orange":"theme-orange","purple":"theme-purple","pink":"theme-pink"})[app.themeColor] || '' : '', todayKey: util.todayKey() });
+      colorClass: app.themeColor ? ({"green":"","blue":"theme-blue","orange":"theme-orange","purple":"theme-purple","pink":"theme-pink"})[app.themeColor] || '' : '', todayKey: util.dayKeyFor(util.getSettings()) });
     this.loadData();
   },
 
@@ -33,10 +33,11 @@ Page({
       ]);
       const todos = todoRes.data || [];
       const done = todos.filter((t) => t.done).length;
-      const today = util.todayKey();
+      // 归属日期统一走 util.dayKeyFor(午夜模式),与番茄钟写入端、其它页面同口径
+      const today = util.dayKeyFor(util.getSettings());
       let mins = 0;
       for (const r of focusRes.data || []) {
-        if (r.day === today) mins += r.minutes || 0;
+        if (r && r.day === today) mins += Number(r.minutes) || 0;
       }
       this.setData({ todoAll: todos.length, todoDone: done, focusMins: mins });
     } catch (err) {
