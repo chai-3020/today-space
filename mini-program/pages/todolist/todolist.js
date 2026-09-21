@@ -23,21 +23,23 @@ Page({
     try {
       const app = getApp();
       const openid = await app.waitOpenid();
-      if (!openid) console.warn('todolist loadData: openid 未就绪,focus_log 查询已跳过');
+      if (!openid) console.warn('todolist loadData: openid 未就绪,focus 统计已跳过');
       const db = wx.cloud.database();
-      const [todoRes, focusRes] = await Promise.all([
+      // 待办仍然直读客户端集合(权限规则保证只返回自己的);
+      // focus_log 的全量拉取已改为云函数服务端聚合,见下面的 getFocusStats。
+      const [todoRes, statsRes] = await Promise.all([
         db.collection('todos').limit(100).get(),
-        openid
-          ? db.collection('focus_log').where({ openid }).limit(1000).get()
-          : Promise.resolve({ data: [] })
+        openid ? wx.cloud.callFunction({ name: 'getFocusStats' }) : Promise.resolve({ result: null })
       ]);
       const todos = todoRes.data || [];
       const done = todos.filter((t) => t.done).length;
       // 归属日期统一走 util.dayKeyFor(午夜模式),与番茄钟写入端、其它页面同口径
       const today = util.dayKeyFor(util.getSettings());
       let mins = 0;
-      for (const r of focusRes.data || []) {
-        if (r && r.day === today) mins += Number(r.minutes) || 0;
+      const stats = (statsRes && statsRes.result) || null;
+      if (stats && stats.code === 0) {
+        const row = (stats.byDay || {})[today];
+        mins = row ? (Number(row.minutes) || 0) : 0;
       }
       this.setData({ todoAll: todos.length, todoDone: done, focusMins: mins });
     } catch (err) {

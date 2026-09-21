@@ -197,20 +197,19 @@ Page({
   // ---- 专注 ----
   async loadFocus() {
     try {
-      const app = getApp();
-      const openid = await app.waitOpenid();
-      if (!openid) {
-        console.warn('loadFocus skipped: openid 未就绪');
+      // 2026-09-21:改走云函数服务端聚合(原来在这里拉 focus_log 全量再自己累加)
+      const res = await wx.cloud.callFunction({ name: 'getFocusStats' });
+      const r = res.result || {};
+      if (r.code !== 0) {
+        console.error('getFocusStats failed', r.error);
         return;
       }
-      const db = wx.cloud.database();
-      const res = await db.collection('focus_log').where({ openid }).limit(1000).get();
       const byDay = {};
       const sessions = {};
-      for (const r of res.data) {
-        if (!r || !r.day) continue;                       // 跳过脏数据,避免 NaN 污染整页
-        byDay[r.day] = (byDay[r.day] || 0) + (Number(r.minutes) || 0);
-        sessions[r.day] = (sessions[r.day] || 0) + (Number(r.sessions) || 0);
+      for (const [day, row] of Object.entries(r.byDay || {})) {
+        if (!day || !row) continue;                        // 跳过脏数据,避免 NaN 污染整页
+        byDay[day] = Number(row.minutes) || 0;
+        sessions[day] = Number(row.sessions) || 0;
       }
       this.setData({ focusLog: { byDay, sessions } });
       // 归属日期走 util.dayKeyFor:与番茄钟的写入端、其它页面保持同一口径(午夜模式)
