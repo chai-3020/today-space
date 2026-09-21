@@ -17,7 +17,23 @@ App({
       traceUser: true
     });
     this.initTheme();
-    this.login();
+    // 存住登录 Promise,供 waitOpenid() 等待
+    this._loginPromise = this.login();
+  },
+
+  // 等待静默登录完成,返回 openid(供页面做数据归属过滤)
+  waitOpenid() {
+    const openid = this.globalData.openid;
+    if (openid) return Promise.resolve(openid);
+    // 登录尚未完成(或已退出登录):等 onLaunch 那次 login() 落地后再读一次
+    if (!this._openidPromise) {
+      const login = this._loginPromise || Promise.resolve();
+      this._openidPromise = Promise.resolve(login)
+        .catch(() => {})
+        .then(() => this.globalData.openid || null)
+        .then((id) => { this._openidPromise = null; return id; });
+    }
+    return this._openidPromise;
   },
 
   // 静默登录:获取 openid + 用户信息

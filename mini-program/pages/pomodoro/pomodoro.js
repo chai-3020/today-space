@@ -163,9 +163,15 @@ Page({
   // ---- 数据加载 ----
   async loadToday() {
     try {
+      const app = getApp();
+      const openid = await app.waitOpenid();
+      if (!openid) {
+        console.warn('loadToday skipped: openid 未就绪');
+        return;
+      }
       const db = wx.cloud.database();
-      const res = await db.collection('focus_log').limit(1000).get();
-      const today = util.todayKey();
+      const res = await db.collection('focus_log').where({ openid }).limit(1000).get();
+      const today = this.todayKeyHint();
       let minutes = 0, sessions = 0;
       for (const r of res.data) {
         if (r.day === today) {
@@ -181,10 +187,16 @@ Page({
 
   async loadSessions() {
     try {
+      const app = getApp();
+      const openid = await app.waitOpenid();
+      if (!openid) {
+        console.warn('loadSessions skipped: openid 未就绪');
+        return;
+      }
       const db = wx.cloud.database();
-      const today = util.todayKey();
+      const today = this.todayKeyHint();
       const res = await db.collection('pomo_sessions')
-        .where({ day: today })
+        .where({ openid, day: today })
         .orderBy('startedAt', 'desc')
         .limit(100)
         .get();

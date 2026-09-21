@@ -182,8 +182,14 @@ Page({
   // ---- 专注 ----
   async loadFocus() {
     try {
+      const app = getApp();
+      const openid = await app.waitOpenid();
+      if (!openid) {
+        console.warn('loadFocus skipped: openid 未就绪');
+        return;
+      }
       const db = wx.cloud.database();
-      const res = await db.collection('focus_log').limit(1000).get();
+      const res = await db.collection('focus_log').where({ openid }).limit(1000).get();
       const byDay = {};
       const sessions = {};
       for (const r of res.data) {

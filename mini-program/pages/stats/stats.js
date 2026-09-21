@@ -52,8 +52,14 @@ Page({
 
   async loadAll() {
     try {
+      const app = getApp();
+      const openid = await app.waitOpenid();
+      if (!openid) {
+        console.warn('stats loadAll skipped: openid 未就绪');
+        return;
+      }
       const db = wx.cloud.database();
-      const res = await db.collection('focus_log').limit(1000).get();
+      const res = await db.collection('focus_log').where({ openid }).limit(1000).get();
       const rows = res.data || [];
       // 归一化:day -> {minutes, sessions}
       const byDay = {};
