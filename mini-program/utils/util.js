@@ -12,7 +12,14 @@ function todayKey() {
   return dateKey(new Date());
 }
 
+// 读取本地设置。此前每个页面各写一份 getSettings(),这里收拢成一份。
+function getSettings() {
+  try { return wx.getStorageSync('ts-settings') || {}; } catch (e) { return {}; }
+}
+
 // 归属日期:午夜模式开启时,0:00-4:00 计入前一天
+// 所有"今日专注"的读与写都必须走这个函数(写入端见 pomodoro.onSessionComplete),
+// 否则凌晨完成的专注会在番茄钟页算今天、在首页/统计/待办集算昨天,四页数字打架。
 function dayKeyFor(hint) {
   if (hint && hint.midnightOn) {
     const now = new Date();
@@ -47,4 +54,4 @@ function greeting() {
   return h < 5 ? '夜深了' : h < 12 ? '早上好' : h < 18 ? '下午好' : '晚上好';
 }
 
-module.exports = { dateKey, todayKey, dayKeyFor, weekLabels, fmtClock, greeting, weekdays };
+module.exports = { dateKey, todayKey, getSettings, dayKeyFor, weekLabels, fmtClock, greeting, weekdays };

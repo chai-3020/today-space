@@ -23,17 +23,35 @@ App({
 
   // 等待静默登录完成,返回 openid(供页面做数据归属过滤)
   waitOpenid() {
-    const openid = this.globalData.openid;
-    if (openid) return Promise.resolve(openid);
-    // 登录尚未完成(或已退出登录):等 onLaunch 那次 login() 落地后再读一次
+    if (this.globalData.openid) return Promise.resolve(this.globalData.openid);
+    // 复用进行中的登录;没有就现起一次 —— 这样"清空本机数据"(profile 页)
+    // 之后各页面还能自己恢复,而不是永远拿到 null、数据永久空白。
     if (!this._openidPromise) {
-      const login = this._loginPromise || Promise.resolve();
+      const login = this._loginPromise || this.login();
       this._openidPromise = Promise.resolve(login)
         .catch(() => {})
         .then(() => this.globalData.openid || null)
         .then((id) => { this._openidPromise = null; return id; });
     }
     return this._openidPromise;
+  },
+
+  // 清空本机状态(profile 页的"清除本机数据"用)。
+  // 说明:微信小程序无法真正"退出登录" —— 身份由微信侧静默下发,
+  // 下次 login 仍会拿到同一个 openid。这里能做的是清掉本机设置与缓存。
+  resetLocalState() {
+    try {
+      wx.removeStorageSync('ts-settings');
+      wx.removeStorageSync('ts-theme');
+      wx.removeStorageSync('ts-pomo-modes');
+    } catch (e) {}
+    this.globalData.userInfo = null;
+    this.globalData.openid = null;
+    this.globalData.nickname = '';
+    this._loginPromise = null;
+    this._openidPromise = null;
+    this.initTheme();
+    this.applyThemeToCurrentPage();
   },
 
   // 静默登录:获取 openid + 用户信息
