@@ -48,9 +48,37 @@
 
 ---
 
-## 二、审查中发现的其它问题(未修改,待你决策)
+### 4. 【严重】`doAlerts()` 从未定义 —— 番茄钟完成流程必崩,专注永远不落库
+
+**问题**:`pages/pomodoro/pomodoro.js` 有两处(计时回调、`onShow` 补算)调用 `this.doAlerts()`,但**全仓库没有任何地方定义它**(`git log -S doAlerts` 显示它自首个快照起就只被调用、从未定义)。
+
+```js
+this.remaining = 0;
+this.stopTimer();
+this.doAlerts();            // ← TypeError: this.doAlerts is not a function
+this.onSessionComplete();   // ← 永远执行不到
+```
+
+**后果**:倒计时归零即抛异常 → `onSessionComplete()` 不执行 → `pomo_sessions` / `focus_log` **一条都不会写**;异常发生在 `setInterval` 回调内,还会持续抛。用户看到的是"计时停在 00:00、无提示、统计永远为 0"。**这是本次审查最严重的必现功能失效**,也是统计页始终没有数据的根因。
+
+**修复**:
+- 补上 `doAlerts()`:按 `ts-settings.soundOn`(默认开)决定是否 `wx.vibrateShort`,并对可用性有限的 API 做 `try/catch`。
+- 抽出统一出口 `finishSession()` = 先 `stopTimer()` → 再提示(独立 `try/catch`)→ 最后上报(独立 `try/catch`),**保证提示逻辑的异常不会顶掉数据上报**。
+- 两处归零分支改为调用 `finishSession()`。
+
+### 5. 【高】番茄钟页 30 秒轮询定时器无法清理(真实泄漏)
+
+**问题**:`pages/pomodoro/pomodoro.js` 里 `setInterval(() => this.refreshNowLine(), 30000)` 的返回值被丢弃,`onUnload` 只清理了番茄计时器 —— 页面销毁后该定时器仍在跑,会对已销毁页面 `setData`。
+
+**修复**:保存为 `this.nowLineTimerId`,`onUnload` 中 `clearInterval` 并置空。
+
+> 注:这两项都属于"改动小、风险低、影响大",已在本次一并修复(提交见文末)。审计列出的 H3(暂停后 `startAt` 被覆盖导致上报被拒)、H4(退出登录调用不存在的云函数)、H5(两套数据写入非原子)等**未修改**,需要你决定后我再动。
+
+
 
 ### H1.【严重】`doAlerts()` 从未定义 —— 番茄钟完成流程必崩,专注永远不落库
+
+> **已修复**,见第一节第 4 条。此处保留原始发现记录。
 
 `pages/pomodoro/pomodoro.js:95` 与 `:278` 都调用 `this.doAlerts()`,但**全仓库没有任何地方定义它**。
 
