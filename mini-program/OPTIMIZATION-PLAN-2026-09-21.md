@@ -25,14 +25,17 @@
 - **结论**：这条**不是 bug**，但 UI 文案"今日完成 N 个番茄"（`pomodoro.wxml:27`）用的是 `todaySessions`＝`focus_log.sessions`，与"番茄"语义一致，保持即可。**不改**。
 - 记录在此是为了避免后续误改。
 
-#### A3. 暂停超过 1 分钟的正常会话会被服务端拒收
+#### A3. 上报校验太硬：合法会话会被**整条拒收**（静默丢数据）
 
-- **现象**：开始专注 → 暂停一会儿（>1 分钟）→ 继续跑完 → 提示"记录失败"。
-- **证据**：`cloudfunctions/recordSession/index.js:57-60` —— `if (focusedMs > wallMs + 60000)`，其中 `wallMs = endedAt - startedAt`（含暂停），而 `focusedMs` 是净专注。**暂停的场景下 `focusedMs < wallMs` 恒成立**，这条判断永远不会误伤……
-  - 但反过来的场景会：`minutes` 用 `Math.round(focusedSeconds/60)`（`pomodoro.js:402`），而 `focusedMs` 只统计"正在跑"的段。若用户在**最后一段**还没结算时就触发上报，`_focusedMs` 会偏小 → `Math.abs(focusedMs/60000 - minutes) > 3` 拒收。
-- **证据链**：`finishSession()` 先 `creditSegment()` 再 `stopTimer()` 再 `onSessionComplete()`（`:80-93`），顺序是对的；但 `onShow` 路径（`:143`）直接 `finishSession()`，此时 `_segmentStartMs` 可能已因 `onHide` 丢过一段时间 → 净时长偏小 → 被判"时长与上报不一致"。
-- **改法**：服务端把"净专注 vs 上报分钟"的容差从硬拒收改为**以服务端为准降级入库**：`minutes = Math.min(minutes, Math.round(focusedMs/60000))` 并记 `adjusted: true`；或客户端上报前统一用 `Math.max(1, Math.floor(focusedMs/60000))` 并由服务端做上限校验而不是相等校验。
-- **收益**：消灭"跑完了却没记上"的静默失败（用户对这类产品的第一抱怨就是数据丢失）。
+- **背景**：`cloudfunctions/recordSession/index.js:53-60` 两条校验 ——
+  - ① `Math.abs(focusedMs/60000 - minutes) > 3` → 拒收；
+  - ② `focusedMs > wallMs + 60000` → 拒收。
+  ② 在"含暂停"的场景下恒不触发（净专注必然小于墙钟跨度），**逻辑是对的**。问题出在①的**容差方向**：只要客户端算出的 `focusedMs` 因生命周期问题少统计超过 3 分钟，这次已经跑完的专注就被整条丢掉，用户只看到一句"记录失败"，数据永久消失。
+- **触发路径（真实可达）**：`pomodoro.js:322-329` 的 tick 走 `endAt - Date.now()`，`onHide` 停 tick、`onShow` 只补算 `remaining` 而**不补算 `_focusedMs`**（`_focusedMs` 只在 `creditSegment()` 里按 `Date.now() - _segmentStartMs` 累加，`:341-346`）。所以"切后台直到计时结束再回来"这条路上，`_focusedMs` 由 `:400` 退化成 `endedAt - _sessionStartMs`（含后台时间）→ 若中间还叠加过暂停，两个数就打架，直接撞上①。
+- **改法（两步）**：
+  1. **客户端**补"后台补账"：`onShow` 里若 `running && endAt <= now`，先把 `_focusedMs += (this.endAt - this._segmentStartMs)`（而不是 `Date.now() - _segmentStartMs`）再 `finishSession()` —— 计时语义上"该结束的时刻"就是 `endAt`，后台那段不该算进专注。
+  2. **服务端**把①从"拒收"改成"**以服务端为准降级入库**"：`const min = Math.max(1, Math.min(minutes, Math.round(focusedMs/60000) || minutes))`，并写入 `adjusted: true` 标记；只有 `focusedMs <= 0` 或超过 180 分钟上限才拒收。
+- **收益**：把"静默丢掉一次专注"变成"照实记录并标注"，这是用户对这类产品最敏感的数据可靠性问题。
 
 #### A4. 深色模式下番茄钟圆环轨道几乎不可见
 
