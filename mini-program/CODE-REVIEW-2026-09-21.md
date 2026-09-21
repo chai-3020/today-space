@@ -72,7 +72,56 @@ this.onSessionComplete();   // ← 永远执行不到
 
 **修复**:保存为 `this.nowLineTimerId`,`onUnload` 中 `clearInterval` 并置空。
 
-> 注:这两项都属于"改动小、风险低、影响大",已在本次一并修复(提交见文末)。审计列出的 H3(暂停后 `startAt` 被覆盖导致上报被拒)、H4(退出登录调用不存在的云函数)、H5(两套数据写入非原子)等**未修改**,需要你决定后我再动。
+> 注:这两项都属于"改动小、风险低、影响大",已在本次一并修复(提交见文末)。
+
+### 6. 【高】暂停后恢复被判"时长不一致",整次记录被丢弃(H3)
+
+**问题**:恢复计时时把 `startAt` 重置为"恢复时刻",而云函数用 `endedAt - startedAt` 反推时长并要求与标称时长吻合 → "暂停 10 分钟再跑完"会被判 `时长与时间不一致`,**整次专注直接丢弃**。
+
+**修复**:
+- 客户端引入净专注时长统计:`_sessionStartMs`(会话真实起点)、`_focusedMs`(累计净专注)、`_segmentStartMs`(当前段起点)。
+- 新增 `creditSegment()`(把当前段结算进净专注)、`pauseTimer()`(暂停,保留会话状态)、`abortSession()`(切模式/重置/离开页面时彻底放弃)、`resetSessionState()`(入库成功后清状态)。
+- 上报改为 `{ minutes: 实际净专注分钟, focusedSeconds, startedAt: 真实起点, endedAt, runId }`。
+- 云函数校验改为:① `focusedSeconds` 与上报 `minutes` 吻合(±3 分钟);② 净专注时长不得超过真实时间跨度(防伪造);**暂停时长不再参与判定**。
+- 验算脚本覆盖 5 种场景(不暂停 / 暂停 10 分钟 / 暂停 10+2 分钟 / 自定义 5 分钟暂停 30 分钟 / 1 分钟快速验证),全部通过;并对照确认旧逻辑会拒绝"暂停 10 分钟"的场景。
+
+### 7. 【高】"退出登录"调用不存在的云函数,且会把数据永久清空(H4)
+
+**问题**:`profile.js` 调用不存在的 `logout` 云函数(异常被空 catch 吞掉),然后只把 `globalData.openid` 置空 —— 微信身份是静默下发的,这既不是真登出,又会让 `waitOpenid()` 从此一直返回 null,各页面跳过查询,表现为"数据全空白,只能重启小程序"。
+
+**修复**:
+- 语义改为**"清除本机数据"**(按钮文案与弹窗同步修改):清 `ts-settings`/`ts-theme`/`ts-pomo-modes` + 重置 `globalData` + 重新 `initTheme()`。
+- `app.js` 新增 `resetLocalState()`;`waitOpenid()` 在没有进行中的登录时会**自己发起一次 `login()`**,所以清除后各页面能自行恢复,不再永久空白。
+
+### 8. 【高】两套数据写入的非原子与去重脆弱(H5)
+
+**问题**:`pomo_sessions`(明细)与 `focus_log`(聚合)分两步写、无事务;去重键用毫秒级 `endedAt`,重试差 1ms 就绕过。
+
+**修复**:
+- 客户端在**会话开始时**生成 `runId` 并全程沿用(失败重试也用同一个),云函数以它构造确定性主键 `s_<openid尾12位>_<runId>` 作为 `pomo_sessions` 的 `_id` —— 重复提交直接命中主键冲突被挡掉,**不再依赖时间戳去重,也没有 count→add 的并发窗口**。
+- `focus_log` 的累加保持原子自增;补建分支的极小概率并发建重在统计端按行累加不会算错(重复的日记录被加两次才是问题,而它只在"当天首条记录恰好并发"时出现,且明细侧已去重)。
+
+### 9. 【中】"午夜模式"四页口径不一致(M2)
+
+**问题**:`pomodoro.js` 用 `todayKeyHint()`(午夜模式感知),而 `index.js`/`stats.js`/`todolist.js` 用 `util.todayKey()`(不含)→ 凌晨完成的专注在四个页面显示不同数字。
+
+**修复**:`utils/util.js` 新增并导出 `getSettings()`;四个页面的"今日"判定统一改为 `util.dayKeyFor(util.getSettings())`,`pomodoro.todayKeyHint()` 也改为内部调用它(单一实现)。
+
+### 10. 【高】首页 `onLoad` 必崩:`this.getSettings()` 从未定义(计划外发现)
+
+**问题**:`pages/index/index.js` 的 `onLoad` 第 30 行调用 `this.getSettings()`,但该文件**从未定义这个方法** → `onLoad` 抛 `TypeError`,后面的 `tick()` / `startClock()` / `init()` 全部执行不到(时钟不走、昵称不刷新、专注统计不加载)。
+
+**修复**:补上 `getSettings()`(转发到 `util.getSettings()`)。
+
+### 11. 顺带修掉的小问题
+
+| 问题 | 修复 |
+|---|---|
+| `profile.wxml` 的"明暗主题"项漏 `bindtap`,`onToggleTheme()` 是死函数 | 补上 `bindtap="onToggleTheme"` |
+| `todolist.json` 未开 `enablePullDownRefresh`,但页面实现了 `onPullDownRefresh` | 加上该配置项 |
+| `index.js` / `stats.js` / `todolist.js` 聚合时 `r.minutes` 缺字段会产生 `NaN` 并污染整页 | 统一 `Number(x) || 0` 并跳过无 `day` 的行 |
+| `soundOn` 开关有 UI 无人读取 | `doAlerts()` 已按 `ts-settings.soundOn` 决定是否震动,开关生效 |
+| `util.dayKeyFor()` 曾被加入但无调用方(死代码) | 已在四个页面接线 |
 
 
 
