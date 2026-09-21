@@ -20,6 +20,15 @@ const _ = db.command;
 
 const SESSION_TYPES = ['focus', 'short', 'long'];
 
+// 按给定时区偏移(分钟,JS 的 getTimezoneOffset 语义:UTC - 本地)求出本地日期键
+function dayKeyInTz(ms, tzOffsetMinutes) {
+  const shifted = new Date(ms - tzOffsetMinutes * 60000);
+  const y = shifted.getUTCFullYear();
+  const m = String(shifted.getUTCMonth() + 1).padStart(2, '0');
+  const d = String(shifted.getUTCDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 exports.main = async (event) => {
   const { OPENID } = cloud.getWXContext();
   if (!OPENID) return { code: 1, error: '无法获取用户身份' };
@@ -45,9 +54,19 @@ exports.main = async (event) => {
     return { code: 1, error: '专注时长超过实际耗时' };
   }
 
-  // ---- 日期(前端按用户本地时区算好再传,避免服务器时区偏差)----
-  const day = String(event.day || '');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return { code: 1, error: '日期格式不对' };
+  // ---- 日期:由服务端从 endedAt 推导,不再信任客户端传来的 day ----
+  // 客户端只提供"设备相对 UTC 的时区偏移"(new Date().getTimezoneOffset()),
+  // 这样既尊重用户本地日期,又杜绝了"把 day 填成历史任意一天来刷数据"。
+  const tzOffsetMinutes = Number(event.tzOffsetMinutes);
+  const tz = Number.isFinite(tzOffsetMinutes) && Math.abs(tzOffsetMinutes) <= 14 * 60
+    ? tzOffsetMinutes
+    : 480; // 缺省按 UTC+8
+  const day = dayKeyInTz(endedAt, tz);
+  // 兼容旧客户端:它仍在传 day,此时只做一致性核对,不一致以服务端推导为准
+  const claimedDay = String(event.day || '');
+  if (claimedDay && claimedDay !== day) {
+    console.warn('recordSession: day mismatch, using derived day', claimedDay, '->', day);
+  }
 
   // ---- 幂等键 ----
   // 客户端在会话开始时生成,重试时沿用同一个值;缺省时退化为用户名+结束时刻。
