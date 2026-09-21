@@ -312,10 +312,20 @@ db.collection('focus_log').where({ openid }).limit(1000).get()
 | `pages/index/index.js` | 查询补用户过滤;口径改 `util.dayKeyFor()`;**补上从未定义的 `getSettings()`**(此前 `onLoad` 必崩);聚合加脏数据兜底 |
 | `pages/todolist/todolist.js` | 查询补用户过滤;口径改 `util.dayKeyFor()`;聚合加脏数据兜底;`todolist.json` 开启下拉刷新 |
 | `pages/profile/profile.js` / `.wxml` | "退出登录"改为**"清除本机数据"**(不再调用不存在的 `logout` 云函数,清完重新登录);补上"明暗主题"缺失的 `bindtap` |
+| `pages/notes/notes.js` | 便签改为按用户确定性 `_id` upsert(消除幽灵文档);未保存时不覆盖本地输入;离开页面前补存 |
+| `cloudfunctions/getFocusStats/`(新增) | 服务端分页聚合专注记录,替代客户端的 `limit(1000)` 全量拉取 |
+| `cloudfunctions/clearDoneTodos/`(新增) | 服务端批量删除已完成待办,替代客户端逐条 `remove()` |
+| `cloudfunctions/recordSession/index.js`(第三轮) | `day` 改由服务端从 `endedAt` + 时区偏移推导(只接受 `dayOffset` 0/-1),杜绝伪造历史日期 |
 | `CODE-REVIEW-2026-09-21.md` | 本报告 |
 
 Git 提交:
 - `b5f41ad` chore: 首次快照(修改前存档)
 - `07c3f1d` fix(cloud): 云函数改用显式 openid 字段
 - `89460cc` fix(pomodoro): 补上从未定义的 doAlerts(),修复番茄钟完成流程
+- `814495b` fix: 修复暂停丢记录、清除数据、写入幂等与四页口径不一致
+- (本轮)`fix: 服务端聚合统计、批量清除已完成、便签确定性 id、日期改由服务端推导`
+
+> **部署提醒**:本轮新增了 `getFocusStats`、`clearDoneTodos` 两个云函数,`recordSession` 也有改动。
+> 四个项目云函数(`login` / `updateProfile` / `addFocus` / `recordSession`)+ 两个新增函数
+> **都需要在微信开发者工具里「上传并部署」**,否则客户端会拿不到统计、清除失败。
 - (本轮)`fix: 修复暂停丢记录、清除数据、写入幂等与四页口径不一致`
