@@ -50,20 +50,67 @@
 
 ## 二、审查中发现的其它问题(未修改,待你决策)
 
-### A.【中】首页时钟定时器从不清理
+### H1.【严重】`doAlerts()` 从未定义 —— 番茄钟完成流程必崩,专注永远不落库
 
-`pages/index/index.js:37-40`
+`pages/pomodoro/pomodoro.js:95` 与 `:278` 都调用 `this.doAlerts()`,但**全仓库没有任何地方定义它**。
 
 ```js
-startClock() {
-  if (this._clockTimer) { clearInterval(this._clockTimer); }
-  this._clockTimer = setInterval(() => this.tick(), 1000);
-}
+this.remaining = 0;
+this.stopTimer();
+this.doAlerts();            // ← TypeError: this.doAlerts is not a function
+this.onSessionComplete();   // ← 永远执行不到
 ```
 
-**问题**:该文件里**没有 `onUnload`,也没有 `onHide`** —— 这个每秒触发的定时器永远不会被 `clearInterval`。虽然 `pages/index/index` 是 tabBar 页面、常驻内存,实际影响有限,但每次 `setData` 都会触发一次视图层通信,属于持续的无谓开销。
+**后果**:倒计时归零时抛异常 → `onSessionComplete()` 不执行 → `pomo_sessions` / `focus_log` **一条记录都不会写**。用户看到的是:计时停在 00:00、没有提示音、没有"完成"提示、统计永远是 0。异常发生在 `setInterval` 回调里,还会每秒重复抛出。
 
-**建议**:加 `onHide() { clearInterval(this._clockTimer); this._clockTimer = null; }`,`onShow` 里已经有 `if (!this._clockTimer) this.startClock();` 的重启逻辑,配套即可。
+**这是目前最严重的必现功能失效**,也解释了为什么统计页始终没有数据。
+
+**建议**:补一个 `doAlerts()`(按 `ts-settings.soundOn` 决定震动/音频),并把"提示"与"上报"用独立 `try/catch` 隔开,保证上报不被提示逻辑的异常打断。
+
+### H2.【高】番茄钟页的 30 秒轮询定时器无法清理(真实泄漏)
+
+`pages/pomodoro/pomodoro.js:68`
+
+```js
+setInterval(() => this.refreshNowLine(), 30000);   // 返回值被丢弃
+```
+
+`onUnload` 只调了 `stopTimer()`(清的是番茄计时器),这个时间线刷新器**没有保存引用、也没有任何地方 clearInterval**,页面销毁后仍会持续触发并对已销毁页面 `setData`。
+
+**建议**:存成 `this._nowLineTimer`,在 `onHide`/`onUnload` 清理;或直接去掉轮询 —— 30 秒精度对一条分钟级参考线没有意义,`onShow` 时刷一次即可。
+
+### H3.【高】暂停后恢复,会被云函数判为"时长不一致"而**静默丢弃整次记录**
+
+`pages/pomodoro/pomodoro.js:270` 在"恢复计时"分支里重置了 `startAt`:
+
+```js
+this.startAt = Date.now();          // 覆盖掉真正的开始时间
+this.endAt = this.startAt + this.remaining * 1000;
+```
+
+而云函数 `cloudfunctions/recordSession/index.js:28-31` 用 `endedAt - startedAt` 反推实际时长,并要求与上报的 `minutes` 相差 ≤3 分钟。于是"暂停 10 分钟再继续跑完"这种正常操作会被判 `时长与时间不一致`,**整次专注被丢弃**,前端只弹一句"记录失败"。
+
+**建议**:把"已跑时长"单独累计(`accumulated`),恢复时只重置 `endAt`;上报用实际净专注时长。或让云函数改用累计字段校验。
+
+### H4.【高】"退出登录"调用不存在的云函数,且会把数据永久清空
+
+`pages/profile/profile.js:133-147`
+
+```js
+try { await wx.cloud.callFunction({ name: 'logout' }); } catch (e) {}   // 云函数不存在
+app.globalData.openid = null;   // 只置空本地,不是真登出
+wx.switchTab({ url: '/pages/index/index' });
+```
+
+三个问题:① `logout` 云函数不存在(仓库只有 login/updateProfile/addFocus/recordSession),异常被空 catch 吞掉;② 清空 `globalData.openid` 不构成登出(身份由微信侧静默获取,下次仍拿到同一 openid);③ **置空之后 `waitOpenid()` 会一直返回 null**,各页面直接跳过查询 —— 表现为"所有数据变空白,只能重启小程序"。
+
+**建议**:要么删掉这个按钮,要么明确成"清空本机缓存"语义(清 storage + 重新 login 刷新 openid)。
+
+---
+
+### A.【低】首页时钟定时器的清理是**正确的**(原判"严重度中"有误)
+
+`pages/index/index.js:37-40` 的 `startClock()` 开头有 `if (this._clockTimer) clearInterval(this._clockTimer)`,`onShow` 也有 `if (!this._clockTimer)` 守卫,只会存在一个实例;`pages/index/index` 是 tabBar 页、常驻内存,每秒刷新时钟本就是预期行为。**此项不构成缺陷**,真正需要修的是 H2(`pomodoro.js:68` 那个连引用都没存的定时器)。
 
 ### B.【中】"清除已完成"逐个串行删除
 
