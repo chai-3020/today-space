@@ -95,7 +95,11 @@ this.onSessionComplete();   // ← 永远执行不到
 
 **建议**:补一个 `doAlerts()`(按 `ts-settings.soundOn` 决定震动/音频),并把"提示"与"上报"用独立 `try/catch` 隔开,保证上报不被提示逻辑的异常打断。
 
+## 二、审查中发现的其它问题(H 系列,均未修改,待你决策)
+
 ### H2.【高】番茄钟页的 30 秒轮询定时器无法清理(真实泄漏)
+
+> **已修复**,见第一节第 5 条。
 
 `pages/pomodoro/pomodoro.js:68`
 
@@ -221,7 +225,10 @@ db.collection('focus_log').where({ openid }).limit(1000).get()
 | `pages/stats/stats.js` | `focus_log` 查询补用户过滤 |
 | `pages/index/index.js` | `focus_log` 查询补用户过滤 |
 | `pages/todolist/todolist.js` | `focus_log` 查询补用户过滤 |
+| `pages/pomodoro/pomodoro.js`(第二轮) | **补上从未定义的 `doAlerts()`**;新增统一出口 `finishSession()`,把提示与数据上报用独立 `try/catch` 隔开;30 秒轮询定时器保存引用并在 `onUnload` 清理 |
+| `CODE-REVIEW-2026-09-21.md` | 本报告 |
 
 Git 提交:
 - `b5f41ad` chore: 首次快照(修改前存档)
 - `07c3f1d` fix(cloud): 云函数改用显式 openid 字段
+- (后续)fix(pomodoro): 补上 doAlerts 并修复完成流程/定时器泄漏
