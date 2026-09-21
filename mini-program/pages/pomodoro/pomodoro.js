@@ -47,6 +47,15 @@ Page({
   intervalId: null,
   nowLineTimerId: null,
   endAt: 0,
+  // 计时统计(2026-09-21 新增,修"暂停后恢复被判时长不符"的问题):
+  //   _sessionStartMs  本次会话真实开始时刻(含暂停,只在会话开始时赋值一次)
+  //   _focusedMs       本次会话累计的净专注时长
+  //   _segmentStartMs  当前这段"正在跑"的起点
+  //   _runId           幂等键,会话开始时生成一次,重试沿用,服务端据此挡重复
+  _sessionStartMs: 0,
+  _focusedMs: 0,
+  _segmentStartMs: 0,
+  _runId: '',
 
   getSettings() {
     try { return wx.getStorageSync('ts-settings') || {}; } catch (e) { return {}; }
@@ -69,6 +78,7 @@ Page({
   // 计时归零的统一出口:先停机,再提示,最后上报。
   // 提示失败不能影响上报,所以两步各自独立 try/catch。
   finishSession() {
+    if (this._segmentStartMs) this.creditSegment();  // 结算最后一段净专注时长
     this.stopTimer();
     try {
       this.doAlerts();
@@ -290,7 +300,7 @@ Page({
 
   onMode(e) {
     const mode = e.currentTarget.dataset.mode;
-    this.stopTimer();
+    this.abortSession();
     this.setData({ mode });
     this.total = this.modes[mode].minutes * 60;
     this.remaining = this.total;
@@ -299,11 +309,18 @@ Page({
 
   onToggle() {
     if (this.data.running) {
-      this.stopTimer();
+      this.pauseTimer();      // 暂停:结算这一段净专注时长
     } else {
       if (this.remaining <= 0) this.remaining = this.total;
-      this.startAt = Date.now();
-      this.endAt = this.startAt + this.remaining * 1000;
+      if (!this._sessionStartMs) {
+        // 本次会话的第一段:记录真实起点并发一个只属于本次会话的幂等键
+        this._sessionStartMs = Date.now();
+        this._runId = `r${this._sessionStartMs.toString(36)}${Math.floor(Math.random() * 1e6).toString(36)}`;
+        this._focusedMs = 0;
+      }
+      this.startAt = this._sessionStartMs;
+      this._segmentStartMs = Date.now();
+      this.endAt = this._segmentStartMs + this.remaining * 1000;
       this.setData({ running: true });
       this.intervalId = setInterval(() => {
         this.remaining = Math.max(0, Math.round((this.endAt - Date.now()) / 1000));
@@ -318,9 +335,42 @@ Page({
   },
 
   onReset() {
-    this.stopTimer();
+    this.abortSession();
     this.remaining = this.total;
     this.updatePomo();
+  },
+
+  // 把当前这段运行时长结算进 _focusedMs(用户暂停 / 结束时调用)
+  creditSegment() {
+    if (this._segmentStartMs) {
+      this._focusedMs += Math.max(0, Date.now() - this._segmentStartMs);
+      this._segmentStartMs = 0;
+    }
+  },
+
+  // 暂停:清定时器但保留会话状态,恢复后接着算
+  pauseTimer() {
+    this.creditSegment();
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+    this.endAt = 0;
+    this.setData({ running: false });
+  },
+
+  // 彻底中止本次会话(切模式 / 重置):不结算、不上报
+  abortSession() {
+    if (this.intervalId) {
+      clearInterval(this.intervalId);
+      this.intervalId = null;
+    }
+    this.endAt = 0;
+    this._sessionStartMs = 0;
+    this._focusedMs = 0;
+    this._segmentStartMs = 0;
+    this._runId = '';
+    this.setData({ running: false });
   },
 
   stopTimer() {
@@ -332,19 +382,10 @@ Page({
     this.setData({ running: false });
   },
 
-  // 归属日期:午夜模式开启时,0-4 点计入前一天
+  // 归属日期:午夜模式开启时,0-4 点计入前一天。
+  // 统一走 util.dayKeyFor,保证与首页/统计/待办集口径一致。
   todayKeyHint() {
-    const s = this.getSettings();
-    if (s.midnightOn) {
-      const now = new Date();
-      const h = now.getHours();
-      if (h >= 0 && h < 4) {
-        const d = new Date(now);
-        d.setDate(d.getDate() - 1);
-        return util.dateKey(d);
-      }
-    }
-    return util.todayKey();
+    return util.dayKeyFor(this.getSettings());
   },
 
   async onSessionComplete() {
