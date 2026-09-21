@@ -23,7 +23,7 @@
   <!-- 外观 | 主题 -->
   <view class="section-title">外观 | 主题</view>
   <view class="panel">
-    <view class="setting-item">
+    <view class="setting-item" bindtap="onToggleTheme">
       <view class="setting-left"><text class="setting-icon">🌗</text><text class="setting-name">明暗主题</text><text class="setting-desc">浅色 / 深色</text></view>
       <text class="setting-value">{{themeLabel}}</text>
     </view>
@@ -68,7 +68,7 @@
     </view>
   </view>
 
-  <button class="logout-btn" bindtap="onLogout">退出登录</button>
+  <button class="logout-btn" bindtap="onLogout">清除本机数据</button>
 
   <!-- 格言弹窗 -->
   <view class="modal-mask" wx:if="{{showMotto}}" bindtap="closeMotto">

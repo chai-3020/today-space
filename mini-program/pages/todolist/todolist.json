@@ -1,4 +1,5 @@
 {
   "usingComponents": {},
-  "navigationBarTitleText": "待办集"
+  "navigationBarTitleText": "待办集",
+  "enablePullDownRefresh": true
 }
