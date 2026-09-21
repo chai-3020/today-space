@@ -34,6 +34,13 @@ Page({
     this.init();
   },
 
+  // 2026-09-21 补:onLoad 一直在调用 this.getSettings(),但本文件从未定义它,
+  // onLoad 第 30 行抛 TypeError 后 tick/startClock/init 全都执行不到
+  // (时钟不动、昵称不刷新、专注统计不加载)。统一走 util.getSettings()。
+  getSettings() {
+    return util.getSettings();
+  },
+
   startClock() {
     if (this._clockTimer) { clearInterval(this._clockTimer); }
     this._clockTimer = setInterval(() => this.tick(), 1000);

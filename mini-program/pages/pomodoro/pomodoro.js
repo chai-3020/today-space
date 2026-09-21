@@ -416,15 +416,26 @@ Page({
         this.setData({ showDoneBanner: true, lastRecord: minutes });
         wx.showToast({ title: label + '完成 +' + minutes + ' 分钟', icon: 'success' });
         setTimeout(() => this.setData({ showDoneBanner: false }), 4000);
+        this.resetSessionState();   // 已入库,清掉本次会话的计时与幂等键
         this.loadToday();
         this.loadSessions();
       } else {
+        // 入库失败:保留 _runId 与计时状态,用户可重试且不会重复计数
         wx.showToast({ title: r.error || '记录失败', icon: 'none' });
       }
     } catch (err) {
       console.error('recordSession failed', err);
       wx.showToast({ title: '记录失败,请检查网络', icon: 'none' });
     }
+  },
+
+  // 一次会话真正结束(已入库)后调用
+  resetSessionState() {
+    this._sessionStartMs = 0;
+    this._focusedMs = 0;
+    this._segmentStartMs = 0;
+    this._runId = '';
+    this.startAt = 0;
   },
 
   onPullDownRefresh() {
