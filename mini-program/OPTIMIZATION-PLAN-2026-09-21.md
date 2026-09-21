@@ -196,18 +196,46 @@
 | 10 | **C6** 分享卡片（今日统计图） | Forest 种树分享 | 2h |
 | 11 | **C5** 完成提示音 | 全部竞品 | 0.5h |
 
-### P2 —— 差异化（做出来就是特色）
+### P2 —— 架构与成本（数据量一上来就必须做，越早越省事）
 
 | # | 事项 | 说明 | 预估 |
 |---|---|---|---|
-| 12 | **E6** 自习室（同桌/排行榜） | 云开发 `watch()` 实时同步在线成员与专注状态；需要 `rooms` / `room_members` 集合 + 定时触发器清理僵尸成员 | 2-3 天 |
-| 13 | **E7** 白名单/专注模式（离开小程序就记一次"中断"） | `onHide` 计数 + 上报；比锁机温和，适合小程序形态 | 1 天 |
-| 14 | **E8** 数据导出 + 年度报告（可分享的长图） | 年底传播性强 | 1 天 |
-| 15 | **B3** `focus_log` 聚合缓存 + 近 400 天窗口 | 数据量上来后必做 | 1 天 |
+| 12 | **B3** 新增 `stats_daily` 汇总集合 + 定时触发器 | `_id = openid_yyyyMMdd`，字段 `totalMin / sessions / byHour[24]`；`recordSession` 落库时顺手 `_.inc` 累加，**统计页/首页只读这一条**。`getFocusStats` 降级为"兜底/历史回填"用途 | 1 天 |
+| 13 | **B3** 页面级内存缓存 | `app.globalData.focusStatsCache = { at, data }`，60 秒内复用；4 个页面的调用从 4 次降到 1 次 | 0.5h |
+| 14 | **B3** 组合索引 | `focus_log(openid↑, day↑)`、`pomo_sessions(openid↑, day↑)`、`todos(_openid↑, done↑, createdAt↓)`、`countdowns(_openid↑, targetDate↑)` | 0.5h |
+| 15 | 列表改游标分页 | 现状 `where().orderBy().limit(100)`（`index.js:98`、`pomodoro.js:240`、`todolist.js:31`、`countdown.js:25`）在数据超 100 条时会**静默截断**；改 `startAt < 上一页最后一条` + `limit(20)`。<br>⚠️ 待实测：小程序端单次查询上限一直是 20 条的历史说法，需在开发者工具里用 `.limit(100)` 实测确认（云函数端确为 100） | 2h |
+| 16 | 离线队列 | 断网时把会话暂存 `wx.setStorageSync`，恢复后按 `runId` 幂等补传（`recordSession` 的确定性 `_id` 已经天然支持） | 0.5 天 |
+
+### P3 —— 差异化（做出来就是特色）
+
+| # | 事项 | 说明 | 预估 |
+|---|---|---|---|
+| 17 | **E6** 自习室（房间号 + 在场人数 + 房内日榜） | 云开发 `watch()` 实时同步；新增 `rooms` / `room_members` 集合 + 定时触发器清理僵尸成员。**这是小程序唯一可行的"监督"替代品**（锁机做不到） | 2-3 天 |
+| 18 | **E7** 待办 ↔ 番茄绑定 | 开始专注时选一条待办，`pomo_sessions` 带 `todoId`；统计支持按任务归因（专注清单验证过的强绑定） | 1 天 |
+| 19 | **E8** 数据导出 + 年度报告长图 | "我的"加"导出专注记录"；年底长图传播性强 | 1 天 |
+| 20 | 白噪音 / 音景 | 小程序可做，但需自备音频资源与 CDN 流量（210 点/GB，注意成本） | 1 天 |
+| 21 | 订阅消息提醒 | "番茄结束/倒数日到期"提醒；授权要在"刚完成一次专注"这种高意愿时刻索取 | 1 天 |
+
+### P4 —— 明确不做（写下来避免以后重复讨论）
+
+| 事项 | 为什么不做 |
+|---|---|
+| 锁机 / 学霸模式 / App 白名单 | 小程序无系统权限，做出来只会误判（用户抱怨里"锁不住""清除后台就失效"都是这类） |
+| 全局排行榜 | 成本高（跨用户实时读）、挫败尾部用户；只做"自习室房内榜" |
+| 每秒写库 / 前端累加时长 | 直接撞资源点成本和"计时不可信"两类问题 |
 
 ### 部署清单（每次上线对照）
 
-1. 集合权限：`todos`/`notes`/`countdowns` = **仅创建者可读写**；`users`/`focus_log`/`pomo_sessions` = **所有用户可读，仅创建者可读写**（或按 B7 补 `_openid` 后收紧为仅创建者）。
-2. 索引：`focus_log(openid↑, day↑)`、`pomo_sessions(openid↑, day↑)`、`todos(_openid↑, done↑, createdAt↓)`。
+1. 集合权限：`todos`/`notes`/`countdowns` = **仅创建者可读写**；`users`/`focus_log`/`pomo_sessions` = **所有用户可读，仅创建者可读写**（或按 B7 给每条补 `_openid` 后收紧为仅创建者 + 自定义安全规则）。
+2. 索引：`focus_log(openid↑, day↑)`、`pomo_sessions(openid↑, day↑)`、`todos(_openid↑, done↑, createdAt↓)`、`countdowns(_openid↑, targetDate↑)`。
 3. 云函数部署：`cli cloud functions deploy --env cloud1-d9gqbbkdz44c81883 --project "D:\codex  use\mini-program" --port 33067 --remote-npm-install --names login recordSession getFocusStats clearDoneTodos updateProfile`（`addFocus` 删除后不要再传）。
 4. 上传前先 `cli.bat preview` 出一版二维码自测，再 `cli.bat upload --version x.y.z --desc "..."`。
+5. 若将来启用定时触发器/汇总函数，记得给汇总类函数配**运行时长与错误告警**。
+
+---
+
+## 第四部分：实施顺序建议（一句话版）
+
+**先 P0 五条（纯修复，不动设计，当天可上线）→ 再 P2 的 12/13/14（架构与成本，越早做越省事）→ 然后 P1 的留存三件套（热力图 + 连续天数 + 分享卡片）→ 最后才是自习室。**
+
+理由：P0 修的是"数据会丢、计时会停"这类致命体验；P2 决定成本上限，等 DAU 起来再改要迁移数据；P1 是留存曲线；自习室是放大器，但它的价值建立在"你自己先把专注记录做准"之上。
