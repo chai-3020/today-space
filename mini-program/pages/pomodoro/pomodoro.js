@@ -409,7 +409,9 @@ Page({
           focusedSeconds,        // 净专注秒数,服务端据此校验
           startedAt, endedAt,    // 真实起止(含暂停),用于时间轴展示
           runId,                 // 幂等键:重试沿用同一个值,不会重复入库
-          day: this.todayKeyHint()
+          // 日期由服务端按这个偏移从 endedAt 推导,客户端不再直接传 day
+          // (防止把 day 填成历史任意一天刷数据)
+          tzOffsetMinutes: new Date().getTimezoneOffset()
         }
       });
       const r = res.result || {};
