@@ -66,13 +66,15 @@ Page({
       let totalSessions = 0;
       let totalMinutes = 0;
       let activeDays = 0;
-      const today = util.todayKey();
+      // 归属日期统一走 util.dayKeyFor(午夜模式),与番茄钟写入端、其它页面同口径
+      const today = util.dayKeyFor(util.getSettings());
 
       for (const r of rows) {
-        const day = r.day;
+        const day = r && r.day;
+        if (!day) continue;                                  // 跳过脏数据,避免 NaN 污染整页
         if (!byDay[day]) byDay[day] = { minutes: 0, sessions: 0 };
-        byDay[day].minutes += r.minutes || 0;
-        byDay[day].sessions += r.sessions || 0;
+        byDay[day].minutes += Number(r.minutes) || 0;
+        byDay[day].sessions += Number(r.sessions) || 0;
       }
       for (const d of Object.keys(byDay)) {
         totalMinutes += byDay[d].minutes;
