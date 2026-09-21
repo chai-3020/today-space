@@ -22,6 +22,9 @@ Page({
   async load() {
     try {
       const db = wx.cloud.database();
+      // B6:这条查询**故意**不带 openid 条件 —— 隔离完全依赖集合权限
+      // "仅创建者可读写"(客户端写入时平台自动注入 _openid)。
+      // ⚠️ 一旦把这个集合的权限放宽成"所有用户可读",所有人会互相看到对方的倒计时。
       const res = await db.collection('countdowns')
         .orderBy('targetDate', 'asc')
         .limit(100)
@@ -29,8 +32,9 @@ Page({
       const today = util.todayKey();
       const todayDate = new Date(today + 'T00:00:00');
       const items = (res.data || []).map((c) => {
-        const target = new Date(c.targetDate + 'T00:00:00');
-        const days = Math.max(0, Math.round((target - todayDate) / 86400000));
+        const target = new Date(String(c.targetDate || '') + 'T00:00:00');
+        const diff = target - todayDate;
+        const days = isNaN(diff) ? 0 : Math.max(0, Math.round(diff / 86400000));
         return {
           _id: c._id,
           title: c.title || '',
@@ -42,7 +46,7 @@ Page({
       this.setData({ items });
     } catch (err) {
       console.error('countdown load failed', err);
-      wx.showToast({ title: '加载失败,请确认数据库已建 countdowns 集合', icon: 'none' });
+      wx.showToast({ title: '加载失败,请重试', icon: 'none' });
     }
   },
 
@@ -63,15 +67,18 @@ Page({
     if (!targetDate) { wx.showToast({ title: '请选择截止日期', icon: 'none' }); return; }
     try {
       const db = wx.cloud.database();
+      // 客户端写入会自动带 _openid;这里额外显式写一份 openid,
+      // 是为了将来把读写挪到云函数时不用改数据形态(B6)。
+      const openid = (await getApp().waitOpenid()) || '';
       await db.collection('countdowns').add({
-        data: { title, targetDate, createdAt: new Date().toISOString() }
+        data: { openid, title, targetDate, createdAt: new Date().toISOString() }
       });
       this.setData({ showModal: false });
       this.load();
       wx.showToast({ title: '已添加', icon: 'success' });
     } catch (err) {
       console.error('save failed', err);
-      wx.showToast({ title: '保存失败,请确认数据库已建 countdowns 集合', icon: 'none' });
+      wx.showToast({ title: '保存失败,请重试', icon: 'none' });
     }
   },
 
