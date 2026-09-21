@@ -16,6 +16,8 @@ Page({
     noDoneLine: false,
     showMotto: false,
     mottoInput: '',
+    showRest: false,
+    restInput: 5,
     showNameModal: false,
     nameInput: ''
   },
@@ -81,6 +83,34 @@ Page({
   goPomodoro() { wx.navigateTo({ url: '/pages/pomodoro/pomodoro' }); },
   goCountdown() { wx.navigateTo({ url: '/pages/countdown/countdown' }); },
   goStats() { wx.switchTab({ url: '/pages/stats/stats' }); },
+
+  // ---- 自定义休息时间(B5)----
+  // 此前这一行只是"点一下跳到番茄钟",值存了却没人用,是个假设置。
+  // 现在:写 ts-settings.restMin,并让番茄钟的短休默认值跟随它
+  //(番茄钟那边 loadCustomModes 会在用户没单独改过短休时采用这个值)。
+  onEditRest() {
+    this.setData({ showRest: true, restInput: this.data.restMin || 5 });
+  },
+  onRestInput(e) { this.setData({ restInput: e.detail.value }); },
+  closeRest() { this.setData({ showRest: false }); },
+  saveRest() {
+    const n = Math.round(Number(this.data.restInput));
+    if (!(n >= 1 && n <= 180)) {
+      wx.showToast({ title: '请输入 1-180 的整数', icon: 'none' });
+      return;
+    }
+    this.saveSettings({ restMin: n });
+    // 让新值真正生效:清掉"用户自定义短休"的旧值,否则番茄钟会继续用旧的自定义值
+    try {
+      const modes = wx.getStorageSync('ts-pomo-modes');
+      if (modes && modes.short !== undefined) {
+        modes.short = n;
+        wx.setStorageSync('ts-pomo-modes', modes);
+      }
+    } catch (e) { /* ignore */ }
+    this.setData({ showRest: false, restMin: n });
+    wx.showToast({ title: '休息时间已设为 ' + n + ' 分钟', icon: 'success' });
+  },
 
   onToggleSound(e) {
     const v = e && e.detail ? e.detail.value : !this.data.soundOn;

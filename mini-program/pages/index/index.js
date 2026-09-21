@@ -266,7 +266,7 @@ Page({
   },
 
   onPullDownRefresh() {    this.loadTodos();
-    this.loadFocus();
+    this.loadFocus(true);
     const app = getApp();
     this.setData({ nickname: app.globalData.nickname || '新朋友' });
     wx.stopPullDownRefresh();

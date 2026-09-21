@@ -46,8 +46,8 @@
       <view class="setting-left"><text class="setting-icon">💬</text><text class="setting-name">自定义番茄钟格言</text></view>
       <view class="setting-right"><text class="setting-value">{{motto || '默认'}}</text><text class="setting-arrow">›</text></view>
     </view>
-    <view class="setting-item" bindtap="goPomodoro">
-      <view class="setting-left"><text class="setting-icon">⏱️</text><text class="setting-name">自定义休息时间</text></view>
+    <view class="setting-item" bindtap="onEditRest">
+      <view class="setting-left"><text class="setting-icon">⏱️</text><text class="setting-name">自定义休息时间</text><text class="setting-desc">短休的默认时长,可在番茄钟里临时改</text></view>
       <text class="setting-value">{{restMin}} 分钟</text>
     </view>
     <view class="setting-item" bindtap="onToggleSound">
@@ -69,6 +69,19 @@
   </view>
 
   <button class="logout-btn" bindtap="onLogout">清除本机数据</button>
+
+  <!-- 休息时长弹窗 -->
+  <view class="modal-mask" wx:if="{{showRest}}" bindtap="closeRest">
+    <view class="modal-card" catchtap="noop">
+      <view class="modal-title">自定义休息时间</view>
+      <input class="modal-input" type="number" placeholder="1-180 分钟" value="{{restInput}}" bindinput="onRestInput" />
+      <view class="modal-tip">保存后作为番茄钟"短休"的默认时长</view>
+      <view class="modal-actions">
+        <view class="modal-btn cancel" bindtap="closeRest">取消</view>
+        <view class="modal-btn ok" bindtap="saveRest">保存</view>
+      </view>
+    </view>
+  </view>
 
   <!-- 格言弹窗 -->
   <view class="modal-mask" wx:if="{{showMotto}}" bindtap="closeMotto">
